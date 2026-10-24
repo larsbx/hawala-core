@@ -518,7 +518,22 @@ impl Journal {
                 proof_digest.as_slice(),
             ],
         )?;
-        if inserted != 1 { return Err(JournalError::AuthorizationReplay); }
+        if inserted != 1 {
+            // Same transfer with a different signed authorization is
+            // equivocation, not an innocuous identical nonce retry.
+            let previous: Option<Vec<u8>> = tx.query_row(
+                "SELECT proof_digest FROM qr_attempt_authorizations WHERE transfer_id = ?1",
+                params![transfer_id.as_slice()], |row| row.get(0),
+            ).optional()?;
+            return if previous.as_deref() == Some(proof_digest.as_slice()) {
+                Err(JournalError::AuthorizationReplay)
+            } else if previous.is_some() {
+                Err(JournalError::Conflict)
+            } else {
+                // Same QR nonce used under this pair for a different transfer.
+                Err(JournalError::AuthorizationReplay)
+            };
+        }
         let changed = tx.execute(
             "UPDATE obligations
              SET phase = 'dispensing', attempt_id = ?2, terminal_id = ?3

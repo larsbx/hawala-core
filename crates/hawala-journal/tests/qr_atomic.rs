@@ -96,7 +96,7 @@ fn wrong_second_intent_fails_without_authorizing_another_attempt(){
  j.register(&a).unwrap();
  assert!(attempt(&j,&a,&i,&s,v).is_ok());
  let (b,k,t,w)=evidence(false,22,23);
- assert!(matches!(attempt(&j,&b,&k,&t,w),Err(JournalError::InvalidTransition)));
+ assert!(matches!(attempt(&j,&b,&k,&t,w),Err(JournalError::Conflict)));
  assert_eq!(j.event_count(a.terms().transfer_id).unwrap(),2);
  assert_eq!(j.status(a.terms().transfer_id).unwrap(),Some(Phase::Dispensing));
 }

@@ -2,8 +2,10 @@
 
 ## Boundaries
 
-- **hawala-core** will own bilateral exposure limits, accepted obligations,
-  payouts, clearing and settlement. Payout and settlement are distinct events.
+- **hawala-core** owns signed bilateral obligation evidence and will
+  separately implement real exposure limits, payouts, clearing and settlement.
+  A signed payout receipt and settlement acknowledgment are independent,
+  and neither by itself proves that cash or settled assets moved.
 - **identity-core** owns persistent identities, QR presentation, signed
   credentials, proof of possession, ratings and evidence evaluation.
 - **Iroh** is intended for transport and peer connectivity; it is not a
@@ -64,8 +66,9 @@ This initial milestone does NOT yet implement:
 - Durable replay storage or credential issuance governance.
 - Privacy-preserving selective disclosure, anti-Sybil enforcement, appeals,
   moderation, or durable evidence retention/deletion policy.
-- Hawala ledger, bilateral trust agreements, obligation state machines,
-  netting, clearing, payment finality, AML/KYC or money-transmitter licensing.
+- Durable Hawala ledger, bilateral trust and risk agreements, execution
+  state machines, netting, clearing, payment finality, AML/KYC or licensing.
+  The current signed obligation *evidence* model is not execution authority.
 - Formal security audit or production-ready financial authorization.
 
 **Next engineering milestone:** implement versioned authenticated P2P message

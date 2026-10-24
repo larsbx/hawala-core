@@ -10,9 +10,10 @@ applications.
 
 ## Current state
 
-**Foundation only.** This repository implements reusable Rust identity
-primitives and an Iroh connection authentication **bridge**, not an on-wire
-peer protocol or any money movement.
+**Foundation only.** This repository implements reusable QR identity
+primitives, an Iroh connection authentication bridge, and a signed bilateral
+Hawala obligation-evidence protocol. It is NOT an on-wire financial network
+or a money-movement service.
 Do **not** represent the current code as a deployed financial network.
 
 The identity crate includes:
@@ -26,11 +27,18 @@ The identity crate includes:
 - Session-scoped signed binding between QR-presented identity and a live
   Iroh 1.4.1 TLS-authenticated EndpointId (without conferring financial rights).
 
+The new `hawala-protocol` crate models dual-signed accepted obligations,
+independent payout/settlement attestations, and deterministic evidence
+reconciliation across temporarily disconnected peers. This is **not** an
+execution ledger: signed attestations are not evidence of physical cash
+delivery or legally final settlement.
+
 Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
-See [Iroh identity binding](docs/iroh-identity-binding.md) and
+See [bilateral obligation evidence](docs/bilateral-obligations.md),
+[Iroh identity binding](docs/iroh-identity-binding.md) and
 [architecture and limitations](docs/architecture.md) and
 [identity without revocation](docs/decisions/0001-no-identity-revocations.md)
 and [QR companion labels](docs/decisions/0002-qr-companion-labels.md).

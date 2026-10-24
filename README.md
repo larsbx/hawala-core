@@ -10,10 +10,10 @@ applications.
 
 ## Current state
 
-**Foundation only.** This repository implements reusable QR identity
-primitives, an Iroh connection authentication bridge, and a signed bilateral
-Hawala obligation-evidence protocol. It is NOT an on-wire financial network
-or a money-movement service.
+**Experimental protocol foundation only.** This repository implements reusable
+QR identity primitives, a mutual Iroh peer-identity handshake over live QUIC
+streams, and signed bilateral Hawala obligation evidence. It is NOT a
+money-movement service or a deployable financial network.
 Do **not** represent the current code as a deployed financial network.
 
 The identity crate includes:
@@ -24,8 +24,9 @@ The identity crate includes:
 - Issuer-, attribute- and scope-specific signed verification evidence with bounded validity.
 - Local issuer trust policy; no revocation registry or centralized identity disablement.
 - Mutually signed interaction evidence and domain-specific verified ratings.
-- Session-scoped signed binding between QR-presented identity and a live
-  Iroh 1.4.1 TLS-authenticated EndpointId (without conferring financial rights).
+- A four-message mutual, CSPRNG-challenged, session-scoped handshake over
+  authenticated Iroh 1.4.1 QUIC; includes a real local two-peer integration test.
+  Identity proof never confers financial rights.
 
 The new `hawala-protocol` crate models dual-signed accepted obligations,
 independent payout/settlement attestations, and deterministic evidence
@@ -38,7 +39,8 @@ financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
 See [bilateral obligation evidence](docs/bilateral-obligations.md),
-[Iroh identity binding](docs/iroh-identity-binding.md) and
+[Iroh identity binding](docs/iroh-identity-binding.md),
+[on-wire handshake](docs/iroh-wire-handshake.md) and
 [architecture and limitations](docs/architecture.md) and
 [identity without revocation](docs/decisions/0001-no-identity-revocations.md)
 and [QR companion labels](docs/decisions/0002-qr-companion-labels.md).

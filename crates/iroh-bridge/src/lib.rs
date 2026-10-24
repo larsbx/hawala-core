@@ -1,16 +1,19 @@
-//! Authenticated Iroh endpoint binding only. This is not a P2P message
-//! handler, financial authorization API, discovery service, or settlement.
+//! Authenticated Iroh endpoint binding, and a mutual on-wire QR identity
+//! handshake. Neither a VerifiedPeer nor an Iroh QUIC connection alone grants
+//! financial authorization or the right to accept/disburse funds.
+pub mod handshake;
+
 use hawala_identity_core::{
     verify_endpoint_proof, EndpointChallenge, IdentityId, ReplayGuard,
     Result, SignedEndpointProof, VerifiedPeer,
 };
 use iroh::endpoint::Connection;
 
-/// Protocol selection must be enforced for inbound and outbound connections.
+/// Only ALPN accepted for identity handshake; not a financial-operation ALPN.
 pub const IDENTITY_ALPN: &[u8] = b"hawala/peer-identity/1";
 
-/// The remote EndpointId is cryptographically authenticated by Iroh QUIC.
-/// The QR-scanned Hawala identity is independently authenticated by signature.
+/// Extracts remote EndpointId from TLS authenticated QUIC peer certificate.
+/// `scanned_identity` MUST be obtained from QR, never from the wire alone.
 pub fn verify_connected_peer(
     connection: &Connection,
     scanned_identity: IdentityId,

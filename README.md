@@ -69,6 +69,12 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
+The `hawala-authority` crate adds a pure `admit_preview` for the accepted
+Hawala obligation, signed QR consent, eligibility, signed custody claims,
+device delegation, FX arithmetic and balanced draft postings. It returns
+no executable financial permission and changes no account or custody state.
+See [M6-C1 reference admission](docs/M6_C1_PREVIEW.md).
+
 The `hawala-ledger` crate provides a finite, exact reference double-entry
 invariant checker: balanced postings PER currency, nonnegative asset and
 liability accounts, deterministic idempotency and rejected tampering.

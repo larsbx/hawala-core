@@ -13,5 +13,6 @@ members = [
   "crates/hawala-qr-auth",
   "crates/hawala-admission",
   "crates/hawala-ledger",
+  "crates/hawala-authority",
 ]
 resolver = "2"

@@ -14,3 +14,9 @@ blake3 = "1.8"
 
 [dev-dependencies]
 tempfile = "3"
+ed25519-dalek = "2.1"
+hawala-admission = { path = "../hawala-admission" }
+hawala-identity-core = { path = "../identity-core" }
+hawala-interaction = { path = "../hawala-interaction" }
+hawala-protocol = { path = "../hawala-protocol" }
+hawala-qr-auth = { path = "../hawala-qr-auth" }

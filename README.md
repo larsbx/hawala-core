@@ -65,9 +65,15 @@ The `hawala-human` crate supports signed beneficiary↔disbursing-hawaladar
 handoff assertions bound to a single durable cash attempt.
 The `hawala-qr-auth` crate adds temporary, verifier/session/attempt-bound
 QR authorization evidence for every human/machine pairing.
-The journal can now store nonce consumption and the one permitted *intent*
+The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
-real cash command or financial authorization** is implemented. The journal
+real cash command or financial authorization** is implemented.
+
+The experimental `hawala-admission` crate checks independently signed,
+transfer-bound eligibility and custody-hold *claims*, and human/machine
+operator-delegation signatures where needed. It does not prove that assets
+are held or that an issuer is legally licensed, and it does not authorize
+a real transaction. See [admission evidence gate](docs/ADMISSION_GATE.md). The journal
 retains those reports without inferring cash delivery or releasing a retry. Its
 signatures attest only to an agreed proposal, not to a regulated permission
 or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md) and

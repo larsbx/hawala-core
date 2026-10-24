@@ -1,0 +1,15 @@
+[package]
+name = "hawala-admission"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Fail-closed, signed evidence gate for Hawala cash-out intent; no payment execution"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+hawala-protocol = { path = "../hawala-protocol" }
+hawala-interaction = { path = "../hawala-interaction" }
+hawala-flow = { path = "../hawala-flow" }
+hawala-qr-auth = { path = "../hawala-qr-auth" }
+ed25519-dalek = "2.1"
+blake3 = "1.8"

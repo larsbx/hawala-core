@@ -5,6 +5,7 @@ pub mod continuity;
 mod credential;
 mod identity;
 mod reputation;
+mod session;
 
 pub use credential::{
     issue_credential, verify_credential, CredentialClaim, SignedCredential, VerificationKind,
@@ -17,6 +18,11 @@ pub use identity::{
 pub use reputation::{
     evaluate_reputation, sign_rating, sign_receipt, Interaction, ReputationSummary, SignedInteraction,
     SignedRating, Rating,
+};
+
+pub use session::{
+    sign_endpoint_proof, verify_endpoint_proof, EndpointChallenge, SignedEndpointProof,
+    VerifiedPeer, MAX_SESSION_PROOF_SECS,
 };
 
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
@@ -63,4 +69,3 @@ fn check_signature(id: &IdentityId, message: &[u8], sig: &[u8; 64]) -> Result<()
     key.verify_strict(message, &Signature::from_bytes(sig))
         .map_err(|_| Error::BadSignature)
 }
-

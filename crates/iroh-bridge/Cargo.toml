@@ -1,0 +1,16 @@
+[package]
+name = "hawala-iroh-bridge"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Iroh authenticated transport ↔ QR-presented Hawala identity binding"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+iroh = "=1.4.1"
+ed25519-dalek = "2.1"
+getrandom = "0.3"
+blake3 = "1.8"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

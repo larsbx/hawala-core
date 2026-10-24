@@ -9,8 +9,10 @@
 
 ## Boundaries
 
-- **hawala-core** will own bilateral exposure limits, accepted obligations,
-  payouts, clearing and settlement. Payout and settlement are distinct events.
+- **hawala-core** owns signed bilateral obligation evidence and will
+  separately implement real exposure limits, payouts, clearing and settlement.
+  A signed payout receipt and settlement acknowledgment are independent,
+  and neither by itself proves that cash or settled assets moved.
 - **identity-core** owns persistent identities, QR presentation, signed
   credentials, proof of possession, ratings and evidence evaluation.
 - **Iroh** is intended for transport and peer connectivity; it is not a
@@ -63,20 +65,21 @@ never be included in public gossip; the opaque receipt ID is not a ledger ID.
 ## Explicit omissions and security gates
 
 This initial milestone does NOT yet implement:
-- Iroh discovery, synchronization, or authenticated application transports.
+- Iroh discovery, synchronization, or complete application transport framing
+  (the thin bridge authenticates the TLS peer ID but exchanges no wire messages).
 - Persistent key custody, device recovery, rotation, credential succession,
   or cryptographic nonce generation.
 - Wire serialization of signed objects and forward-compatible encodings.
 - Durable replay storage or credential issuance governance.
 - Privacy-preserving selective disclosure, anti-Sybil enforcement, appeals,
   moderation, or durable evidence retention/deletion policy.
-- Hawala ledger, bilateral trust agreements, obligation state machines,
-  netting, clearing, payment finality, AML/KYC or money-transmitter licensing.
+- Durable Hawala ledger, bilateral trust and risk agreements, execution
+  state machines, netting, clearing, payment finality, AML/KYC or licensing.
+  The current signed obligation *evidence* model is not execution authority.
 - Formal security audit or production-ready financial authorization.
 
-**Next engineering milestone:** specify versioned authenticated P2P message
-envelopes, issuer-credential trust policy and time-bounded verification,
+**Next engineering milestone:** implement versioned authenticated P2P message
+envelopes over Iroh, issuer-credential trust policy and time-bounded verification,
 durable nonce consumption, and signed transfer-obligation state transitions.
 Start with two-peer convergence and offline replay/adversarial tests before
 exposing customer balances or cash withdrawal.
-

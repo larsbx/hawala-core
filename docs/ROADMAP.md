@@ -47,9 +47,10 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | **P0** | **Local atomic nonce and payout-intent journal** | PR #15 merged; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |
 | P0 | Temporary QR authorization proof | PR #14 merged; financial commit coupling still absent | Authenticator-bound QR, funds held, safe payout gate, full audit |
-| **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 open | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
+| **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 merged | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
-| P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
+| P1 | Exact balanced reference ledger | PR #17 open; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
+| P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
 
@@ -122,9 +123,14 @@ provider agreements, cash-in authentication, or independent security review.
   Still required: issuer legal mandate verification, live custodial balance
   reconciliation, exact accepted quote, account-level reservation and
   governance-controlled admission in the same authoritative ledger commit.
-- **M6-B** Integrate the eligibility/custody evidence and atomic QR/intent
-  journal with an account ledger, epoch fencing and a safe crash-recovery
-  protocol. Never call physical hardware on self-attested evidence.
+- **M6-B** Implement a strict in-memory double-entry accounting model
+  with exact per-currency balance, idempotency, account typing and atomic
+  failure semantics (PR #17). This is not customer funding or custody.
+- **M6-C** Join live eligibility/custody evidence, exact quote, authorized
+  ledger reservations and a one-time QR/attempt journal into ONE serialized
+  durable state transaction with epoch fencing and crash recovery; do not
+  permit physical cash commands before external audit and live custodial
+  reconciliation.
 
 **Delivery rule:** Security-sensitive code is not merge-ready just because
 GitHub reports a PR as mergeable. Require completed CI and targeted review;

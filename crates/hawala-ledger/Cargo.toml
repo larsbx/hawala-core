@@ -1,0 +1,9 @@
+[package]
+name = "hawala-ledger"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Pure exact multi-currency double-entry ledger invariant checker, not custody"
+
+[dependencies]
+blake3 = "1.8"

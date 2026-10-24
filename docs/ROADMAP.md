@@ -50,6 +50,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 merged | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Exact balanced reference ledger | PR #17 merged; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
+| P1 | Typed M6-C1 authority admission preflight | PR #19 open; pure model only | Signed evidence + exact quote arithmetic + journal preview + fail-closed holds |
 | P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
@@ -126,6 +127,10 @@ provider agreements, cash-in authentication, or independent security review.
 - **M6-B** Implement a strict in-memory double-entry accounting model
   with exact per-currency balance, idempotency, account typing and atomic
   failure semantics (PR #17). This is not customer funding or custody.
+- **M6-C1** Implemented typed `AuthorityEnvelope` and pure fail-closed
+  `admit_preview` with combined signed evidence, reference FX arithmetic,
+  explicit external review reports and balanced ledger proposal (PR #19).
+  It does NOT commit customer funds or verify real custodian assets.
 - **M6-C** Detailed [single-authority commit boundary](M6_C_AUTHORITY.md):
   join live eligibility/custody evidence, exact quote, protected credit lots,
   per-currency ledger postings and nonce/attempt in ONE serialized durable

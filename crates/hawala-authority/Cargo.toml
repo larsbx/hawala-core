@@ -1,0 +1,19 @@
+[package]
+name = "hawala-authority"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Pure M6-C authority preflight planning, never an executable financial permit"
+
+[dependencies]
+hawala-admission = { path = "../hawala-admission" }
+hawala-identity-core = { path = "../identity-core" }
+hawala-interaction = { path = "../hawala-interaction" }
+hawala-qr-auth = { path = "../hawala-qr-auth" }
+hawala-protocol = { path = "../hawala-protocol" }
+hawala-safety = { path = "../hawala-safety" }
+hawala-ledger = { path = "../hawala-ledger" }
+blake3 = "1.8"
+
+[dev-dependencies]
+ed25519-dalek = "2.1"

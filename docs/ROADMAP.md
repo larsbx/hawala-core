@@ -22,6 +22,7 @@ with separate custody, hardware keys, liquidity and eligibility conditions.
 | P0 | Secured payment and deposits specification | PR #5 merged | External custody, liability policy and legal controls before real funds |
 | P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
 | **P0** | **ATM identity, capability and outcome reporting** | **PR #9 in progress** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
+| P0 | ATM normalized event simulator and provider contract | PR #10 in progress | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | P0 | Durable transaction-specific QR authorization | Not started | Authenticator-bound QR, funds held, safe payout gate, full audit |

@@ -38,6 +38,8 @@ pub enum Error {
     PermissionDenied,
     Replay,
     DuplicateRating,
+    /// Durable replay database unavailable; financial authentication must fail closed.
+    Storage,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

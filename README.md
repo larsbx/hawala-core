@@ -26,6 +26,8 @@ The identity crate includes:
 - Mutually signed interaction evidence and domain-specific verified ratings.
 - A four-message mutual, CSPRNG-challenged, session-scoped handshake over
   authenticated Iroh 1.4.1 QUIC; includes a real local two-peer integration test.
+- An optional local SQLite replay guard, persisting nonce consumption atomically
+  across crashes and process restarts; per-frame Iroh handshake deadlines.
   Identity proof never confers financial rights.
 
 The new `hawala-protocol` crate models dual-signed accepted obligations,
@@ -38,7 +40,8 @@ Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
-See [bilateral obligation evidence](docs/bilateral-obligations.md),
+See [durable identity replay protection](docs/durable-replay.md),
+[bilateral obligation evidence](docs/bilateral-obligations.md),
 [Iroh identity binding](docs/iroh-identity-binding.md),
 [on-wire handshake](docs/iroh-wire-handshake.md) and
 [architecture and limitations](docs/architecture.md) and

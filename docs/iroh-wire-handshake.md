@@ -49,11 +49,13 @@ and no physical or financial transfer is involved.
 
 ## Remaining security gates
 
-1. Guard supplied by the application must be **durable and atomic across
-   identity-holder devices**. Current test guard is process-local only.
-2. The protocol has no built-in handshake deadline/rate limiter. A hostile
-   peer can stall an accepted stream; applications must bound each step and
-   concurrent in-flight handshakes.
+1. An optional SQLite guard makes nonce consumption durable **only within
+   one verifier authority sharing the SAME database**. Identity-key reuse
+   across devices requires a separate coordinated authority; local storage
+   cannot prevent cross-device replay.
+2. Each frame now has a 20-second deadline, including peer stream receipt
+   acknowledgment. Connection dialing, overall handshake budget, per-peer
+   rate limits, and concurrent-session limits are still application gates.
 3. No hardware-backed device key custody or secure loss/compromise recovery.
 4. Clock skew requires policy; timestamp now is local system wall clock.
 5. Mutual authentication here only establishes identity and transport,

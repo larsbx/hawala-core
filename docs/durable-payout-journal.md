@@ -76,3 +76,10 @@ single-process authority locking.
 `no_cash_dispensed`, `cash_delivered` or `uncertain` outcomes, with
 operator-signed evidence and durable reconciliation; a double-entry
 obligation ledger and policy engine must precede real funds.
+
+## Human cash-handoff evidence
+
+A human-to-human attempt may now record a mutually signed beneficiary/dar
+handoff assertion with `record_human_handoff`. It remains frozen in
+`uncertain` until independently resolved. Details: [human and machine
+payout parity](HUMAN_MACHINE_EXECUTION.md).

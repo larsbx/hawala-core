@@ -9,5 +9,6 @@ members = [
   "crates/hawala-atm",
   "crates/hawala-interaction",
   "crates/hawala-flow",
+  "crates/hawala-human",
 ]
 resolver = "2"

@@ -45,8 +45,9 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
-| **P0** | **Local atomic nonce and payout-intent journal** | PR #15 pending CI; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |
+| **P0** | **Local atomic nonce and payout-intent journal** | PR #15 merged; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |
 | P0 | Temporary QR authorization proof | PR #14 merged; financial commit coupling still absent | Authenticator-bound QR, funds held, safe payout gate, full audit |
+| **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 open | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
@@ -116,8 +117,14 @@ provider agreements, cash-in authentication, or independent security review.
   (PR #15). Still required: binding authenticator keys to trusted devices,
   verified delegation, and atomic **real financial ledger/custody**
   reservation before human or ATM cash commands.
-- **M6-A** Bilateral exposure/eligibility hard stop, custody integration,
-  regulatory controls and financial double-entry remain prerequisites.
+- **M6-A** Create the testable signed evidence gate for eligibility, custody
+  hold and device delegation using independently pinned issuer keys (PR #16).
+  Still required: issuer legal mandate verification, live custodial balance
+  reconciliation, exact accepted quote, account-level reservation and
+  governance-controlled admission in the same authoritative ledger commit.
+- **M6-B** Integrate the eligibility/custody evidence and atomic QR/intent
+  journal with an account ledger, epoch fencing and a safe crash-recovery
+  protocol. Never call physical hardware on self-attested evidence.
 
 **Delivery rule:** Security-sensitive code is not merge-ready just because
 GitHub reports a PR as mergeable. Require completed CI and targeted review;

@@ -47,11 +47,16 @@ reconciliation across temporarily disconnected peers. This is **not** an
 execution ledger: signed attestations are not evidence of physical cash
 delivery or legally final settlement.
 
+The experimental `hawala-journal` crate records dual-signed transfer
+intents, one-way dispense-attempt transitions, and crash recovery to
+`uncertain`. It does not execute cash transfers or reconcile real hardware.
+
 Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
-See [durable replay protection](docs/durable-replay.md),
+See [crash-safe payout intent journal](docs/durable-payout-journal.md),
+[durable replay protection](docs/durable-replay.md),
 [bilateral obligation evidence](docs/bilateral-obligations.md),
 [Iroh identity binding](docs/iroh-identity-binding.md),
 [on-wire handshake](docs/iroh-wire-handshake.md) and

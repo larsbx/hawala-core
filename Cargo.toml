@@ -1,3 +1,3 @@
 [workspace]
-members = ["crates/identity-core", "crates/iroh-bridge", "crates/hawala-protocol", "crates/hawala-safety", "crates/identity-sqlite"]
+members = ["crates/identity-core", "crates/iroh-bridge", "crates/hawala-protocol", "crates/hawala-safety", "crates/identity-sqlite", "crates/hawala-journal"]
 resolver = "2"

@@ -14,7 +14,7 @@ app credits and gift cards are downstream products, not the core protocol.
 | M2 Authenticated Iroh endpoint ↔ QR identity association | PR #3 merged | Compile against pinned Iroh; tests for wrong endpoint/QR, expiry, signed-context mutation and nonce reuse |
 | M3 Two-party obligations and distinct payout/settlement evidence | PR #4 merged | Full signature/FX tampering tests, order-independent reconciliation and equivocation detection |
 | M4 Real authenticated on-wire Iroh protocol | M4-A merged (#6), local two-peer verification green | Two live peers, bounded framed messages, reciprocal authentication, protocol versioning, message size limits; no 0-RTT for financial actions |
-| M5 Durable financial execution journal | Not started | Crash-replay tests, authenticated atomic idempotency/reservation, definite vs indeterminate cash-dispense outcomes, external machine reconciliation |
+| M5 Durable financial execution journal | M5-A experimental intent journal PR #8; awaiting CI | Crash-replay tests, authenticated atomic idempotency/reservation, definite vs indeterminate cash-dispense outcomes, external machine reconciliation |
 | M6 Bilateral trust, liquidity and compliance | Not started | Explicit authorized operating jurisdictions/roles, verified current financial eligibility, limits and risk decisions, auditable denial |
 | M7 Clearing and real settlement | Not started | Double-entry posting, external settlement attestations, netting only with counterparty agreement, no payout↔settlement equivalence |
 | M8 Human agent, merchant, ATM and gift-card adapters | Not started | QR-only identity+name/code, independent transaction-bound signed authorization, regulated providers, dispute/chargeback controls |
@@ -55,8 +55,11 @@ app credits and gift cards are downstream products, not the core protocol.
 - **M4-C** Local crash-durable SQLite identity nonce guard and 20-second
   per-frame deadlines implemented in PR #7. Distributed replay authority
   and clock-skew policy remain open.
-- **M5-A** Separate financial idempotency and crash-safe disbursement journal
-  must not be conflated with identity replay protection.
+- **M5-A** Introduce a file-backed single-authority payout intent journal
+  with durable one-way attempts and crash recovery to `uncertain` (PR #8).
+  No cash hardware, customer balances or actual disbursement authority.
+- **M5-B** Require trusted real hardware outcome evidence, audited
+  reversals/disputes and double-entry accounting before any cash operation.
 - **M5-A** Prototype a crash-safe single-authority obligation journal with
   payment states (reserved, dispensing, confirmed, uncertain, reversed).
   Simulate power loss between external cash execution and local acknowledgement.

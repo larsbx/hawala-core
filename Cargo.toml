@@ -4,7 +4,7 @@ members = [
   "crates/hawala-safety", "crates/identity-sqlite", "crates/hawala-journal",
   "crates/hawala-atm", "crates/hawala-interaction", "crates/hawala-flow",
   "crates/hawala-human", "crates/hawala-qr-auth", "crates/hawala-admission",
-  "crates/hawala-ledger", "crates/hawala-authority",
-  "crates/hawala-commit-sim",
+  "crates/hawala-ledger", "crates/hawala-authority", "crates/hawala-commit-sim",
+  "crates/hawala-custody-model",
 ]
 resolver = "2"

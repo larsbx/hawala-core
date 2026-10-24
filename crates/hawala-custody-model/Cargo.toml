@@ -1,0 +1,11 @@
+[package]
+name = "hawala-custody-model"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Verified-signature custody policy simulators for escrow and federated approvals; no asset control"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+ed25519-dalek = "2.1"
+blake3 = "1.8"

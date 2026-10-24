@@ -6,18 +6,32 @@ identity, verified attributes and reputation are reusable but financially
 non-authoritative. Human agents, merchants and ATMs are adapters. Cash,
 app credits and gift cards are downstream products, not the core protocol.
 
-## Milestones and acceptance gates
+## Delivery strategy — ATM-first
 
-| Milestone | Status | Required evidence before advancing |
-| --- | --- | --- |
-| M1 QR identity, verified evidence, ratings | PRs #1–#2 merged | Rust CI, adversarial proof checks; original merges alone do not prove deployment readiness |
-| M2 Authenticated Iroh endpoint ↔ QR identity association | PR #3 merged | Compile against pinned Iroh; tests for wrong endpoint/QR, expiry, signed-context mutation and nonce reuse |
-| M3 Two-party obligations and distinct payout/settlement evidence | PR #4 merged | Full signature/FX tampering tests, order-independent reconciliation and equivocation detection |
-| M4 Real authenticated on-wire Iroh protocol | M4-A merged (#6), local two-peer verification green | Two live peers, bounded framed messages, reciprocal authentication, protocol versioning, message size limits; no 0-RTT for financial actions |
-| M5 Durable financial execution journal | M5-A experimental intent journal PR #8; awaiting CI | Crash-replay tests, authenticated atomic idempotency/reservation, definite vs indeterminate cash-dispense outcomes, external machine reconciliation |
-| M6 Bilateral trust, liquidity and compliance | Not started | Explicit authorized operating jurisdictions/roles, verified current financial eligibility, limits and risk decisions, auditable denial |
-| M7 Clearing and real settlement | Not started | Double-entry posting, external settlement attestations, netting only with counterparty agreement, no payout↔settlement equivalence |
-| M8 Human agent, merchant, ATM and gift-card adapters | Not started | QR-only identity+name/code, independent transaction-bound signed authorization, regulated providers, dispute/chargeback controls |
+**Automated tellers are the first operational cash-in/cash-out interface.**
+Human hawaladars remain financially responsible counterparties when used in
+a transfer, but initial physical access prioritizes unattended cash terminals
+and cash-recycling devices. Merchants and digital gift cards follow once
+ATM payments and reconciliation have proved safe. ATM operators are parties
+with separate custody, hardware keys, liquidity and eligibility conditions.
+
+| Priority | Milestone | Current state | Exit criteria |
+| --- | --- | --- | --- |
+| P0 | QR + name/code, identity and Iroh | PRs #1–#3, #6 merged | Live mutual peer authentication; no sensitive data on public gossip |
+| P0 | Accepted bilateral Hawala obligations | PR #4 merged | Signed exact terms, FX acceptance, payout != settlement |
+| P0 | Secured payment and deposits specification | PR #5 merged | External custody, liability policy and legal controls before real funds |
+| P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
+| **P0** | **ATM identity, capability and outcome reporting** | **PR #9 in progress** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
+| P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
+| P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
+| P0 | Durable transaction-specific QR authorization | Not started | Authenticator-bound QR, funds held, safe payout gate, full audit |
+| P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
+| P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
+| P2 | Merchant/human teller UI and digital gift cards | Not started | Reuses verified ATM cash protocol and independent compliance gates |
+
+No automated teller may accept or dispense real customer funds on the basis
+of current prototype code. Priority does not relax financial compliance,
+provider agreements, cash-in authentication, or independent security review.
 
 ## Security invariants
 
@@ -55,18 +69,19 @@ app credits and gift cards are downstream products, not the core protocol.
 - **M4-C** Local crash-durable SQLite identity nonce guard and 20-second
   per-frame deadlines implemented in PR #7. Distributed replay authority
   and clock-skew policy remain open.
-- **M5-A** Introduce a file-backed single-authority payout intent journal
-  with durable one-way attempts and crash recovery to `uncertain` (PR #8).
-  No cash hardware, customer balances or actual disbursement authority.
-- **M5-B** Require trusted real hardware outcome evidence, audited
-  reversals/disputes and double-entry accounting before any cash operation.
-- **M5-A** Prototype a crash-safe single-authority obligation journal with
-  payment states (reserved, dispensing, confirmed, uncertain, reversed).
-  Simulate power loss between external cash execution and local acknowledgement.
-- **M5-B** Add signed peer reconciliation with intentionally conflicting
-  evidence, deterministic refusal, and audit/event export.
-- **M6-A** Implement independent bilateral trust/exposure policies and
-  current agent/regulatory eligibility checks before ANY money movement.
+- **ATM-A** Sign and verify one immutable outcome observation per authorized
+  ATM attempt. Bind hardware key, full transaction terms, amount/currency,
+  attempt ID and private device-log hash; classify events conservatively.
+- **ATM-B** Map XFS4IoT ItemsPresented, ItemsTaken, retract/jam and unknown
+  statuses through a provider-specific gateway. Signed gateway reports are
+  claims, not independently proven customer delivery.
+- **ATM-C** Build a simulated cash dispenser/recycler with deterministic
+  interruption scenarios and callback reconciliation. Include deposits as
+  non-spendable pending claims until cash acceptance is confirmed.
+- **ATM-D** Integrate temporary, authenticator-bound QR authorization with
+  Hawala's credit/custody reservation before an ATM cash command.
+- **M6-A** Bilateral exposure/eligibility hard stop, custody integration,
+  regulatory controls and financial double-entry remain prerequisites.
 
 **Delivery rule:** Security-sensitive code is not merge-ready just because
 GitHub reports a PR as mergeable. Require completed CI and targeted review;

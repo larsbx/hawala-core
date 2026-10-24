@@ -5,6 +5,8 @@ use std::{fs::{File, OpenOptions}, path::{Path, PathBuf}, sync::Mutex, time::Dur
 use fs2::FileExt;
 
 use hawala_protocol::{ObligationEvidence, SignedTerms};
+use hawala_atm::{Capabilities, ReportClass, SignedTerminalObservation};
+use hawala_identity_core::IdentityId;
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 
 #[derive(Debug)]
@@ -17,6 +19,8 @@ pub enum JournalError {
     Conflict,
     UnknownTransfer,
     InvalidTransition,
+    UntrustedTerminal,
+    InvalidTerminalEvidence,
 }
 impl From<std::io::Error> for JournalError {
     fn from(value: std::io::Error) -> Self { Self::Io(value) }
@@ -89,14 +93,39 @@ impl Journal {
                  phase TEXT NOT NULL CHECK(phase IN (
                    'registered', 'dispensing', 'uncertain', 'payout_attested', 'cancelled'
                  )),
-                 attempt_id BLOB UNIQUE CHECK(attempt_id IS NULL OR length(attempt_id) = 32)
+                 attempt_id BLOB UNIQUE CHECK(attempt_id IS NULL OR length(attempt_id) = 32),
+                 terminal_id BLOB CHECK(terminal_id IS NULL OR length(terminal_id) = 32)
              ) WITHOUT ROWID;
              CREATE TABLE IF NOT EXISTS events(
                  id INTEGER PRIMARY KEY AUTOINCREMENT,
                  transfer_id BLOB NOT NULL,
                  kind TEXT NOT NULL
-             );",
+             );
+             CREATE TABLE IF NOT EXISTS terminal_reports(
+                 transfer_id BLOB PRIMARY KEY CHECK(length(transfer_id) = 32),
+                 terminal_id BLOB NOT NULL CHECK(length(terminal_id) = 32),
+                 attempt_id BLOB NOT NULL CHECK(length(attempt_id) = 32),
+                 observation_id BLOB NOT NULL CHECK(length(observation_id) = 32),
+                 evidence_digest BLOB NOT NULL CHECK(length(evidence_digest) = 32),
+                 report_class TEXT NOT NULL,
+                 recorded_at INTEGER NOT NULL
+             ) WITHOUT ROWID;",
         )?;
+        // Forward-compatible migration of the M5-A single-authority database.
+        // A previous journal has no terminal_id column. Never discard it.
+        let has_terminal_id = {
+            let mut stmt = db.prepare("PRAGMA table_info(obligations)")?;
+            let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+            let mut found = false;
+            for name in rows { if name? == "terminal_id" { found = true; } }
+            found
+        };
+        if !has_terminal_id {
+            db.execute_batch(
+                "ALTER TABLE obligations ADD COLUMN terminal_id BLOB
+                 CHECK(terminal_id IS NULL OR length(terminal_id) = 32);",
+            )?;
+        }
         // A crash between hardware initiation and result persistence is
         // conservatively UNKNOWN. Never reissue the cash request on restart.
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -156,20 +185,135 @@ impl Journal {
     /// authorized custody checks may execute this. This API does NOT dispense.
     /// Repeated invocations MUST NOT produce another attempt token.
     pub fn begin_attempt(&self, transfer_id: [u8; 32], attempt_id: [u8; 32]) -> Result<()> {
+        self.begin_attempt_bound(transfer_id, attempt_id, None)
+    }
+
+    /// Bind exactly one registered cash terminal to this attempt BEFORE any
+    /// hardware command is dispatched. Only an independently authorized
+    /// Hawala/ATM policy engine may call this; it does not itself authorize cash.
+    pub fn begin_atm_attempt(
+        &self,
+        transfer_id: [u8; 32],
+        attempt_id: [u8; 32],
+        expected_terminal: IdentityId,
+    ) -> Result<()> {
+        self.begin_attempt_bound(transfer_id, attempt_id, Some(expected_terminal))
+    }
+
+    fn begin_attempt_bound(
+        &self,
+        transfer_id: [u8; 32],
+        attempt_id: [u8; 32],
+        terminal: Option<IdentityId>,
+    ) -> Result<()> {
         if transfer_id == [0; 32] || attempt_id == [0; 32] {
             return Err(JournalError::InvalidInput);
         }
         let mut db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let terminal_bytes: Option<Vec<u8>> = terminal.map(|id| id.as_bytes().to_vec());
         let changed = tx.execute(
-            "UPDATE obligations SET phase = 'dispensing', attempt_id = ?2
+            "UPDATE obligations
+             SET phase = 'dispensing', attempt_id = ?2, terminal_id = ?3
              WHERE transfer_id = ?1 AND phase = 'registered'",
-            params![transfer_id.as_slice(), attempt_id.as_slice()],
+            params![transfer_id.as_slice(), attempt_id.as_slice(), terminal_bytes],
         )?;
         if changed != 1 { return Err(JournalError::InvalidTransition); }
         append_event(&tx, &transfer_id, "dispensing")?;
         tx.commit()?;
         Ok(())
+    }
+
+    /// Preserve a signed ATM report without treating it as cash finality.
+    /// Every report must match the terminal locked into the original durable
+    /// attempt and exact transfer terms. The report keeps the cash claim
+    /// frozen as UNCERTAIN; it never issues a second hardware instruction.
+    /// TrustedCapabilities MUST come from operator policy, not peer messages.
+    pub fn record_terminal_report(
+        &self,
+        signed: &SignedTerminalObservation,
+        trusted_capabilities: Capabilities,
+    ) -> Result<bool> {
+        if !trusted_capabilities.valid() {
+            return Err(JournalError::InvalidTerminalEvidence);
+        }
+        let observation = &signed.observation;
+        let mut db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let snapshot: Option<(Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>, i64, Vec<u8>, String)> =
+            tx.query_row(
+                "SELECT terms_digest, attempt_id, terminal_id,
+                        payout_minor, payout_currency, phase
+                 FROM obligations WHERE transfer_id = ?1",
+                params![observation.transfer_id.as_slice()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?,
+                        r.get(3)?, r.get(4)?, r.get(5)?)),
+            ).optional()?;
+        let (terms_digest, attempt_id, terminal_id, minor, currency, phase) =
+            snapshot.ok_or(JournalError::UnknownTransfer)?;
+        if phase != "dispensing" && phase != "uncertain" {
+            return Err(JournalError::InvalidTransition);
+        }
+        let expected_terminal: [u8; 32] = terminal_id
+            .ok_or(JournalError::UntrustedTerminal)?
+            .try_into().map_err(|_| JournalError::InvalidTerminalEvidence)?;
+        let terminal_id = IdentityId::from_bytes(expected_terminal)
+            .map_err(|_| JournalError::InvalidTerminalEvidence)?;
+        signed.verify(terminal_id).map_err(|_| JournalError::InvalidTerminalEvidence)?;
+        if attempt_id.as_deref() != Some(observation.attempt_id.as_slice())
+            || terms_digest != observation.terms_digest.to_vec()
+            || minor < 0 || minor as u64 != observation.payout_minor
+            || currency != observation.currency.to_vec()
+            || observation.recorded_at > i64::MAX as u64
+        {
+            return Err(JournalError::InvalidTerminalEvidence);
+        }
+        let digest = signed.digest();
+        let prior: Option<Vec<u8>> = tx.query_row(
+            "SELECT evidence_digest FROM terminal_reports WHERE transfer_id = ?1",
+            params![observation.transfer_id.as_slice()], |r| r.get(0),
+        ).optional()?;
+        if let Some(prior) = prior {
+            return if prior == digest.to_vec() { Ok(false) }
+                else { Err(JournalError::Conflict) };
+        }
+        let disposition = signed.classify(trusted_capabilities);
+        tx.execute(
+            "INSERT INTO terminal_reports(
+                 transfer_id, terminal_id, attempt_id, observation_id,
+                 evidence_digest, report_class, recorded_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                observation.transfer_id.as_slice(),
+                terminal_id.as_bytes().as_slice(),
+                observation.attempt_id.as_slice(),
+                observation.observation_id.as_slice(),
+                digest.as_slice(),
+                disposition.as_str(), observation.recorded_at as i64,
+            ],
+        )?;
+        tx.execute(
+            "UPDATE obligations SET phase = 'uncertain'
+             WHERE transfer_id = ?1 AND phase = 'dispensing'",
+            params![observation.transfer_id.as_slice()],
+        )?;
+        append_event(&tx, &observation.transfer_id, "terminal_report_recorded")?;
+        tx.commit()?;
+        Ok(true)
+    }
+
+    pub fn terminal_report(&self, transfer_id: [u8; 32]) -> Result<Option<ReportClass>> {
+        let db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let report: Option<String> = db.query_row(
+            "SELECT report_class FROM terminal_reports WHERE transfer_id = ?1",
+            params![transfer_id.as_slice()], |r| r.get(0),
+        ).optional()?;
+        report.map(|s| match s.as_str() {
+            "reported_delivered" => Ok(ReportClass::ReportedDelivered),
+            "reported_not_delivered" => Ok(ReportClass::ReportedNotDelivered),
+            "uncertain" => Ok(ReportClass::Uncertain),
+            _ => Err(JournalError::InvalidTerminalEvidence),
+        }).transpose()
     }
 
     /// A dual-signed payout receipt is only ATTESTED, never a proof of cash

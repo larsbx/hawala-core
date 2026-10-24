@@ -7,6 +7,8 @@ description = "Crash-safe single-authority intent and payout uncertainty journal
 
 [dependencies]
 hawala-protocol = { path = "../hawala-protocol" }
+hawala-atm = { path = "../hawala-atm" }
+hawala-identity-core = { path = "../identity-core" }
 rusqlite = { version = "0.37", features = ["bundled"] }
 fs2 = "0.4"
 

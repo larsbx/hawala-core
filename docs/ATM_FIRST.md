@@ -1,9 +1,10 @@
 # Automated tellers first — Hawala cash access contract
 
-**Priority decision (2026-10-24):** The first physical Hawala access
-points will be automated tellers (ATMs), cash-recycling terminals, and
-authorized ATM-network operator integrations. Merchant POS and independent
-human cash agents follow; the economic core remains **Hawala over Iroh**.
+**Priority decision (2026-10-24):** Automated tellers and cash recyclers
+are the first HARDWARE INTEGRATION targets, not exclusive peers. The
+universal Hawala network supports human↔human, human↔machine and
+machine↔machine from the beginning; see [PEER_MODES.md](PEER_MODES.md).
+The economic core remains **Hawala over Iroh**.
 
 ## Participant model
 

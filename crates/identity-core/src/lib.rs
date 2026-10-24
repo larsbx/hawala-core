@@ -39,6 +39,7 @@ pub enum Error {
     PermissionDenied,
     Replay,
     DuplicateRating,
+    Storage,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

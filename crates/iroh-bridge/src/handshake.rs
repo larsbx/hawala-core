@@ -6,7 +6,7 @@
 //! FULL identity from an independently scanned QR (with name/code displayed).
 //!
 //! This is identity authentication only; no money transfer authority.
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use ed25519_dalek::SigningKey;
 use hawala_identity_core::{
@@ -21,6 +21,9 @@ const MAGIC: &[u8; 8] = b"HWHAND01";
 const PURPOSE: &str = "peer-auth";
 const PROOF_LIFETIME: u64 = 120;
 const MAX_FRAME: usize = 192;
+/// Per-frame deadline: includes accepting/opening the stream and reading or
+/// transmitting the entire bounded frame. Connection setup has its own limit.
+const FRAME_DEADLINE: Duration = Duration::from_secs(20);
 const HELLO: u8 = 1;
 const RESPOND: u8 = 2;
 const PROVE: u8 = 3;
@@ -34,6 +37,7 @@ pub enum HandshakeError {
     Clock,
     Randomness,
     Transport,
+    Timeout,
     Identity(IdentityError),
 }
 
@@ -115,6 +119,11 @@ fn check_alpn(connection: &Connection) -> Result<()> {
 }
 
 async fn send(connection: &Connection, bytes: &[u8]) -> Result<()> {
+    tokio::time::timeout(FRAME_DEADLINE, send_inner(connection, bytes))
+        .await.map_err(|_| HandshakeError::Timeout)?
+}
+
+async fn send_inner(connection: &Connection, bytes: &[u8]) -> Result<()> {
     if bytes.len() > MAX_FRAME { return Err(HandshakeError::MalformedFrame); }
     let mut tx = connection.open_uni().await.map_err(|_| HandshakeError::Transport)?;
     tx.write_all(bytes).await.map_err(|_| HandshakeError::Transport)?;
@@ -128,6 +137,11 @@ async fn send(connection: &Connection, bytes: &[u8]) -> Result<()> {
 }
 
 async fn receive(connection: &Connection, kind: u8, exact_payload: usize) -> Result<Vec<u8>> {
+    tokio::time::timeout(FRAME_DEADLINE, receive_inner(connection, kind, exact_payload))
+        .await.map_err(|_| HandshakeError::Timeout)?
+}
+
+async fn receive_inner(connection: &Connection, kind: u8, exact_payload: usize) -> Result<Vec<u8>> {
     let mut rx = connection.accept_uni().await.map_err(|_| HandshakeError::Transport)?;
     let bytes = rx.read_to_end(MAX_FRAME).await.map_err(|_| HandshakeError::Transport)?;
     payload(&bytes, kind, exact_payload)?;

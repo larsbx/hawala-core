@@ -11,6 +11,7 @@ iroh = "=1.4.1"
 ed25519-dalek = "2.1"
 getrandom = "0.3"
 blake3 = "1.8"
+tokio = { version = "1", features = ["time"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

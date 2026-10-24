@@ -6,32 +6,52 @@ identity, verified attributes and reputation are reusable but financially
 non-authoritative. Human agents, merchants and ATMs are adapters. Cash,
 app credits and gift cards are downstream products, not the core protocol.
 
-## Delivery strategy — ATM-first
+## Delivery strategy — unified human/machine peers; ATM-first hardware
 
-**Automated tellers are the first operational cash-in/cash-out interface.**
-Human hawaladars remain financially responsible counterparties when used in
-a transfer, but initial physical access prioritizes unattended cash terminals
-and cash-recycling devices. Merchants and digital gift cards follow once
-ATM payments and reconciliation have proved safe. ATM operators are parties
-with separate custody, hardware keys, liquidity and eligibility conditions.
+**All peer pairings are in scope from the beginning.** A Hawala peer can be
+a human or a machine; each interaction is handled by the same identity,
+cryptographic trust and obligation layers:
+
+- **Human ↔ human:** individual ↔ hawaladar, hawaladar ↔ hawaladar,
+  person ↔ authorized merchant representative.
+- **Human ↔ machine:** user ↔ ATM or cash recycler, operator ↔ device;
+  machine-initiated interactions are supported as distinct directions.
+- **Machine ↔ machine:** ATM ↔ authorized gateway/other ATM, automated
+  settlement node ↔ node. No unsupervised financial authority follows
+  from machine status alone.
+
+QR plus name/code applies to *both* human and machine identities.
+Machine-to-machine identities are established through QR-scanned or
+QR-backed authorized provisioning, then cryptographically proved over Iroh
+during automated interactions; an ordinary gossip record is not proof
+of QR enrollment or delegation.
+
+**ATMs remain the first hardware integration priority**, not the exclusive
+participation mode or a prerequisite for human-to-human Hawala. Human
+cash-handling agents should reuse the same protocol and reconciliation
+invariants, with human receipts replacing device sensor attestations.
+Business agents and machines still require separately verified legal
+status, eligibility, bilateral limits, liquidity and funding permissions.
 
 | Priority | Milestone | Current state | Exit criteria |
 | --- | --- | --- | --- |
+| **P0** | **Human/human, human/machine, machine/machine symmetric interactions** | PR #11 new universal evidence crate; six directional peer cases reduce to four oriented modes | Signed contexts, no unverified machine authority |
 | P0 | QR + name/code, identity and Iroh | PRs #1–#3, #6 merged | Live mutual peer authentication; no sensitive data on public gossip |
 | P0 | Accepted bilateral Hawala obligations | PR #4 merged | Signed exact terms, FX acceptance, payout != settlement |
 | P0 | Secured payment and deposits specification | PR #5 merged | External custody, liability policy and legal controls before real funds |
 | P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
-| **P0** | **ATM identity, capability and outcome reporting** | **PR #9 in progress** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
-| P0 | ATM normalized event simulator and provider contract | PR #10 in progress | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
+| **P0** | **ATM identity, capability and outcome reporting** | **PR #9 merged** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
+| P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | P0 | Durable transaction-specific QR authorization | Not started | Authenticator-bound QR, funds held, safe payout gate, full audit |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
-| P2 | Merchant/human teller UI and digital gift cards | Not started | Reuses verified ATM cash protocol and independent compliance gates |
+| P0 | Human-agent cash handoff and signed receipt UX | Not started | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
+| P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
 
-No automated teller may accept or dispense real customer funds on the basis
-of current prototype code. Priority does not relax financial compliance,
+No human or automated teller may accept/disburse real customer funds on the
+basis of current prototype code. Priority does not relax financial compliance,
 provider agreements, cash-in authentication, or independent security review.
 
 ## Security invariants
@@ -70,6 +90,13 @@ provider agreements, cash-in authentication, or independent security review.
 - **M4-C** Local crash-durable SQLite identity nonce guard and 20-second
   per-frame deadlines implemented in PR #7. Distributed replay authority
   and clock-skew policy remain open.
+- **PEER-A** Implement signed human/machine interaction intents with a full
+  QR-identity pair, directional participant kinds, role/operation, nonce,
+  accepted Hawala obligation digest and expiry. Require both signatures;
+  no financial authority follows from participation.
+- **PEER-B** Integrate verified Iroh sessions, durable replay consumption,
+  trustworthy person/terminal roles, and human receipts or device telemetry
+  into one transaction-flow adapter (not yet implemented).
 - **ATM-A** Sign and verify one immutable outcome observation per authorized
   ATM attempt. Bind hardware key, full transaction terms, amount/currency,
   attempt ID and private device-log hash; classify events conservatively.

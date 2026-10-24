@@ -16,9 +16,13 @@ bilateral trust, fulfillment, clearing and settlement are the system's core.
 Every QR identity presentation must include a human-readable name or identity
 code. The public QR key is the cryptographic identifier; the adjacent label
 helps people verify they are interacting with the intended participant.
-**Automated tellers (ATMs and cash recyclers) are the first operational
-priority** after Hawala's Iroh trust/obligation foundation. Merchants, human
-cash-handling agents, gift cards and app credits follow as applications.
+**Human and machine participants are equal first-class Hawala peers.**
+All three interaction families are supported by the shared protocol:
+**human ↔ machine, machine ↔ machine, human ↔ human**. ATM and cash-recycler
+integration is the first **hardware adapter priority**, not a restriction on
+who can exchange Hawala obligations. Individual hawaladars and authorized
+businesses remain human-operated access points; machines may execute only
+actions explicitly delegated by independently verified policy.
 
 ## Current state
 
@@ -52,7 +56,12 @@ The experimental `hawala-journal` crate records dual-signed transfer
 intents, one-way dispense-attempt transitions, and crash recovery to
 `uncertain`. It does not execute cash transfers or reconcile real hardware.
 
-The **ATM-first** prototype defines signed, bounded terminal observations,
+The `hawala-interaction` crate models directional human/machine combinations
+and dual-signed interaction context bound to a Hawala obligation digest. Its
+signatures attest only to an agreed proposal, not to a regulated permission
+or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md).
+
+The **ATM-first hardware** prototype defines signed, bounded terminal observations,
 trusted terminal/attempt binding in the durable journal, and conservative
 tri-state cash-out reporting. Such reports never unfreeze an uncertain payout
 or authorize a duplicate attempt. No real ATM hardware or custody is connected.

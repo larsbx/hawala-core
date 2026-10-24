@@ -56,7 +56,8 @@ never be included in public gossip; the opaque receipt ID is not a ledger ID.
 ## Explicit omissions and security gates
 
 This initial milestone does NOT yet implement:
-- Iroh discovery, synchronization, or authenticated application transports.
+- Iroh discovery, synchronization, or complete application transport framing
+  (the thin bridge authenticates the TLS peer ID but exchanges no wire messages).
 - Persistent key custody, device recovery, rotation, credential succession,
   or cryptographic nonce generation.
 - Wire serialization of signed objects and forward-compatible encodings.
@@ -67,8 +68,8 @@ This initial milestone does NOT yet implement:
   netting, clearing, payment finality, AML/KYC or money-transmitter licensing.
 - Formal security audit or production-ready financial authorization.
 
-**Next engineering milestone:** specify versioned authenticated P2P message
-envelopes, issuer-credential trust policy and time-bounded verification,
+**Next engineering milestone:** implement versioned authenticated P2P message
+envelopes over Iroh, issuer-credential trust policy and time-bounded verification,
 durable nonce consumption, and signed transfer-obligation state transitions.
 Start with two-peer convergence and offline replay/adversarial tests before
 exposing customer balances or cash withdrawal.

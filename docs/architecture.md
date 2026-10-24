@@ -1,3 +1,10 @@
+> Proposed secured-payment extension: see [the protocol](secured-payment-protocol.md),
+> [ADR 0003](decisions/0003-secured-network-credits.md), and
+> [security conformance](security-conformance.md). Temporary transaction QR,
+> receipt-based financial reputation and deposits are specified requirements;
+> current main's static identity QR and generic star ratings do not implement them.
+> The reference safety kernel is not a production ledger or custody service.
+
 # Hawala and reusable identity: initial protocol contract
 
 ## Boundaries

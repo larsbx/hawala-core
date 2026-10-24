@@ -4,6 +4,8 @@
 //! not that a note actually reached the customer. No physical command or
 //! automatic payout retry exists here. The human-visible terminal name/code
 //! accompanies its QR identity; only the full QR public key authenticates it.
+pub mod simulator;
+
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use hawala_identity_core::IdentityId;
 

@@ -56,7 +56,8 @@ The **ATM-first** prototype defines signed, bounded terminal observations,
 trusted terminal/attempt binding in the durable journal, and conservative
 tri-state cash-out reporting. Such reports never unfreeze an uncertain payout
 or authorize a duplicate attempt. No real ATM hardware or custody is connected.
-See [ATM-first architecture](docs/ATM_FIRST.md).
+See [ATM-first architecture](docs/ATM_FIRST.md) and the
+[ATM provider event simulator](docs/ATM_PROVIDER_SIMULATOR.md).
 
 Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves

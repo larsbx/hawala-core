@@ -6,6 +6,7 @@ use fs2::FileExt;
 
 use hawala_protocol::{ObligationEvidence, SignedTerms};
 use hawala_atm::{Capabilities, ReportClass, SignedTerminalObservation};
+use hawala_human::SignedHandoff;
 use hawala_identity_core::IdentityId;
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 
@@ -21,6 +22,7 @@ pub enum JournalError {
     InvalidTransition,
     UntrustedTerminal,
     InvalidTerminalEvidence,
+    InvalidHandoffEvidence,
 }
 impl From<std::io::Error> for JournalError {
     fn from(value: std::io::Error) -> Self { Self::Io(value) }
@@ -109,6 +111,13 @@ impl Journal {
                  evidence_digest BLOB NOT NULL CHECK(length(evidence_digest) = 32),
                  report_class TEXT NOT NULL,
                  recorded_at INTEGER NOT NULL
+             ) WITHOUT ROWID;
+             CREATE TABLE IF NOT EXISTS human_reports(
+                 transfer_id BLOB PRIMARY KEY CHECK(length(transfer_id) = 32),
+                 attempt_id BLOB NOT NULL CHECK(length(attempt_id) = 32),
+                 receipt_id BLOB NOT NULL CHECK(length(receipt_id) = 32),
+                 evidence_digest BLOB NOT NULL CHECK(length(evidence_digest) = 32),
+                 asserted_at INTEGER NOT NULL
              ) WITHOUT ROWID;",
         )?;
         // Forward-compatible migration of the M5-A single-authority database.
@@ -353,6 +362,82 @@ impl Journal {
         append_event(&tx, &transfer_id, "cancelled")?;
         tx.commit()?;
         Ok(())
+    }
+
+
+    /// Record mutually signed HUMAN cash-handoff assertions against exactly
+    /// the ONE previously committed local payout attempt. No device terminal
+    /// may be bound to this attempt, and this method never authorizes cash
+    /// delivery or declares customer funds settled.
+    pub fn record_human_handoff(
+        &self,
+        accepted: &SignedTerms,
+        receipt: &SignedHandoff,
+    ) -> Result<bool> {
+        receipt.verify(accepted).map_err(|_| JournalError::InvalidHandoffEvidence)?;
+        let claim = receipt.claim();
+        if claim.asserted_handoff_at > i64::MAX as u64 {
+            return Err(JournalError::InvalidHandoffEvidence);
+        }
+        let mut db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let snapshot: Option<(Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>, i64, Vec<u8>, String)> =
+            tx.query_row(
+                "SELECT terms_digest, attempt_id, terminal_id, payout_minor,
+                        payout_currency, phase FROM obligations WHERE transfer_id = ?1",
+                params![claim.transfer_id.as_slice()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
+            ).optional()?;
+        let (digest, attempt, terminal, payout, currency, phase) =
+            snapshot.ok_or(JournalError::UnknownTransfer)?;
+        if !matches!(phase.as_str(), "dispensing" | "uncertain") {
+            return Err(JournalError::InvalidTransition);
+        }
+        if terminal.is_some() || attempt.as_deref() != Some(claim.attempt_id.as_slice())
+            || digest != claim.terms_digest.to_vec()
+            || payout < 0 || payout as u64 != claim.payout_minor
+            || currency != claim.currency.to_vec()
+        {
+            return Err(JournalError::InvalidHandoffEvidence);
+        }
+        let evidence = receipt.digest();
+        let prior: Option<Vec<u8>> = tx.query_row(
+            "SELECT evidence_digest FROM human_reports WHERE transfer_id = ?1",
+            params![claim.transfer_id.as_slice()], |r| r.get(0),
+        ).optional()?;
+        if let Some(prior) = prior {
+            return if prior == evidence.to_vec() { Ok(false) }
+                else { Err(JournalError::Conflict) };
+        }
+        tx.execute(
+            "INSERT INTO human_reports(
+                transfer_id, attempt_id, receipt_id, evidence_digest, asserted_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                claim.transfer_id.as_slice(),
+                claim.attempt_id.as_slice(),
+                claim.receipt_id.as_slice(),
+                evidence.as_slice(),
+                claim.asserted_handoff_at as i64
+            ],
+        )?;
+        tx.execute(
+            "UPDATE obligations SET phase = 'uncertain'
+             WHERE transfer_id = ?1 AND phase = 'dispensing'",
+            params![claim.transfer_id.as_slice()],
+        )?;
+        append_event(&tx, &claim.transfer_id, "human_handoff_attested")?;
+        tx.commit()?;
+        Ok(true)
+    }
+
+    pub fn human_handoff_recorded(&self, transfer_id: [u8; 32]) -> Result<bool> {
+        let db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let present: Option<i64> = db.query_row(
+            "SELECT 1 FROM human_reports WHERE transfer_id = ?1",
+            params![transfer_id.as_slice()], |r| r.get(0),
+        ).optional()?;
+        Ok(present.is_some())
     }
 
     pub fn event_count(&self, transfer_id: [u8; 32]) -> Result<u64> {

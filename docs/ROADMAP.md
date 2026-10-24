@@ -39,7 +39,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | QR + name/code, identity and Iroh | PRs #1–#3, #6 merged | Live mutual peer authentication; no sensitive data on public gossip |
 | P0 | Accepted bilateral Hawala obligations | PR #4 merged | Signed exact terms, FX acceptance, payout != settlement |
 | P0 | Secured payment and deposits specification | PR #5 merged | External custody, liability policy and legal controls before real funds |
-| **P0** | **Unified flow binding across people and machines** | PR #12 open | Verify each signer represents the exact economic principal from dual-agent accepted terms, any orientation; no financial authority |
+| **P0** | **Unified flow binding across people and machines** | PR #12 merged | Verify each signer represents the exact economic principal from dual-agent accepted terms, any orientation; no financial authority |
 | P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
 | **P0** | **ATM identity, capability and outcome reporting** | **PR #9 merged** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
@@ -48,7 +48,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | Durable transaction-specific QR authorization | Not started | Authenticator-bound QR, funds held, safe payout gate, full audit |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
-| P0 | Human-agent cash handoff and signed receipt UX | Not started | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
+| P0 | Human-agent cash handoff and signed receipt evidence | PR #13 open | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
 
 No human or automated teller may accept/disburse real customer funds on the

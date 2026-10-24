@@ -1,6 +1,7 @@
 //! Reusable identity primitives. No network, filesystem, wallet or Hawala ledger dependency.
 //! This is a protocol foundation, NOT a complete identity provider or money-movement system.
 //! Identity and signed history are not revocable; application permissions are separate.
+pub mod continuity;
 mod credential;
 mod identity;
 mod reputation;
@@ -62,3 +63,4 @@ fn check_signature(id: &IdentityId, message: &[u8], sig: &[u8; 64]) -> Result<()
     key.verify_strict(message, &Signature::from_bytes(sig))
         .map_err(|_| Error::BadSignature)
 }
+

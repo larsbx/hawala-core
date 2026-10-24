@@ -1,0 +1,10 @@
+name: Safety specification vectors
+on: [push, pull_request]
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test -p hawala-safety --all-targets
+      - run: python3 tools/check_quote_vectors.py

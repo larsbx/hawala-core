@@ -1,3 +1,10 @@
+> Proposed secured-payment extension: see [the protocol](docs/secured-payment-protocol.md),
+> [ADR 0003](docs/decisions/0003-secured-network-credits.md), and
+> [security conformance](docs/security-conformance.md). Temporary transaction QR,
+> receipt-based financial reputation and deposits are specified requirements;
+> current main's static identity QR and generic star ratings do not implement them.
+> The reference safety kernel is not a production ledger or custody service.
+
 # hawala-core
 
 A protocol-first, Iroh-native peer-to-peer **hawala** network. Hawala obligations,
@@ -56,3 +63,4 @@ Credits, gift cards, remittance UX
 There is **no global balance database or centralized transaction server**
 required by this architecture. Iroh transport does not provide financial
 consensus, legal compliance, or at-most-once disbursement.
+

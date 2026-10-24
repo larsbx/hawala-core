@@ -1,0 +1,21 @@
+{
+  "version": "hawala-secured-payment/0.1",
+  "status": "UNCONFIGURED_NO_MONEY_MOVEMENT",
+  "network_id": null,
+  "liability_agreement": null,
+  "custodian_and_asset_verification": null,
+  "collateral_profile": {
+    "proposed_only": true,
+    "same_currency": true,
+    "coverage_numerator": 1,
+    "coverage_denominator": 1,
+    "reuse_permitted": false
+  },
+  "commitment_authority_and_fault_model": null,
+  "dispute_and_enforcement_mandates": null,
+  "redemption_service_agreement": null,
+  "currencies_and_fee_schedule": null,
+  "authenticator_and_recovery_policy": null,
+  "regulatory_and_data_policy": null,
+  "hanbali_contract_review": null
+}

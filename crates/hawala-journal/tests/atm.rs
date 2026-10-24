@@ -46,8 +46,8 @@ fn atm_report_keeps_journal_frozen_even_when_operator_says_cash_was_taken() {
         journal.register(&a).unwrap();
         journal.begin_atm_attempt(a.terms().transfer_id, [11; 32], id(7)).unwrap();
         let report = sign_observation(&key(7), observation(&a)).unwrap();
-        assert_eq!(journal.record_terminal_report(&report, capabilities()), Ok(true));
-        assert_eq!(journal.record_terminal_report(&report, capabilities()), Ok(false));
+        assert!(journal.record_terminal_report(&report, capabilities()).unwrap());
+        assert!(!journal.record_terminal_report(&report, capabilities()).unwrap());
         assert_eq!(
             journal.terminal_report(a.terms().transfer_id).unwrap(),
             Some(ReportClass::ReportedDelivered)
@@ -101,7 +101,7 @@ fn wrong_terminal_attempt_currency_and_signed_data_cannot_replace_report() {
         Err(JournalError::InvalidTerminalEvidence)
     ));
     let first = sign_observation(&key(7), o).unwrap();
-    assert_eq!(journal.record_terminal_report(&first, capabilities()), Ok(true));
+    assert!(journal.record_terminal_report(&first, capabilities()).unwrap());
     let mut conflicting = first.observation.clone();
     conflicting.observation_id = [44; 32];
     let second = sign_observation(&key(7), conflicting).unwrap();

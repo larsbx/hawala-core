@@ -35,7 +35,7 @@ fn concurrent_races_consume_exactly_once() {
         let guard = Arc::clone(&guard);
         thread::spawn(move || guard.consume_once(id(1), id(2), [42; 32]).unwrap())
     }).collect();
-    assert_eq!(workers.into_iter().filter(|w| w.join().unwrap()).count(), 1);
+    assert_eq!(workers.into_iter().map(|w| w.join().unwrap()).filter(|won| *won).count(), 1);
     assert_eq!(guard.count(), Ok(1));
 }
 

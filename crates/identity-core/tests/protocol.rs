@@ -85,21 +85,20 @@ fn issued_credential() -> hawala_identity_core::SignedCredential {
 }
 
 #[test]
-fn credentials_require_exact_authority_scope_fresh_revocation_and_signature() {
+fn credentials_require_exact_authority_scope_validity_and_signature() {
     let c = issued_credential();
-    let mut policy = VerificationPolicy::new(105, 30);
+    let mut policy = VerificationPolicy::new();
     policy.authorize_issuer(VerificationKind::Merchant, "US-PA", id(4)).unwrap();
     assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &policy, 110), Ok(()));
     assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-NY", &policy, 110), Err(Error::PermissionDenied));
     assert_eq!(verify_credential(&c, id(1), VerificationKind::Hawaladar, "US-PA", &policy, 110), Err(Error::PermissionDenied));
     assert_eq!(verify_credential(&c, id(2), VerificationKind::Merchant, "US-PA", &policy, 110), Err(Error::PermissionDenied));
-    assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &policy, 136), Err(Error::StaleRevocations));
+    assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &policy, 99), Err(Error::NotYetValid));
     assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &policy, 200), Err(Error::Expired));
-    policy.revoke([9; 16]);
-    assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &policy, 110), Err(Error::Revoked));
+    assert_eq!(verify_credential(&c, id(1), VerificationKind::Merchant, "US-PA", &VerificationPolicy::new(), 110), Err(Error::UntrustedIssuer));
     let mut tampered = issued_credential();
     tampered.claim.expires_at = 201;
-    assert_eq!(verify_credential(&tampered, id(1), VerificationKind::Merchant, "US-PA", &VerificationPolicy::new(100, 100), 110), Err(Error::BadSignature));
+    assert_eq!(verify_credential(&tampered, id(1), VerificationKind::Merchant, "US-PA", &policy, 110), Err(Error::BadSignature));
 }
 
 #[test]

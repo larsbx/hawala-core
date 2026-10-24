@@ -14,15 +14,16 @@ Do **not** represent the current code as a deployed financial network.
 The identity crate includes:
 - Persistent Ed25519 public-key identities with `hawala:id:v1:<hex>` QR payloads.
 - Challenge-response proof of possession with mandatory injected replay protection.
-- Issuer-, attribute- and scope-specific signed verification credentials.
-- Explicit revocation freshness checks and local issuer policy.
+- Issuer-, attribute- and scope-specific signed verification evidence with bounded validity.
+- Local issuer trust policy; no revocation registry or centralized identity disablement.
 - Mutually signed interaction evidence and domain-specific verified ratings.
 
 Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
-See [architecture and limitations](docs/architecture.md).
+See [architecture and limitations](docs/architecture.md) and
+[identity without revocation](docs/decisions/0001-no-identity-revocations.md).
 
 ## Local development
 

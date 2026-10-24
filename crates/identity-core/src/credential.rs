@@ -5,7 +5,9 @@ use ed25519_dalek::SigningKey;
 use crate::identity::IdentityId;
 use crate::{check_signature, encode, signature, valid_label, Error, Result};
 
-/// Verified attributes are NOT financial permission grants.
+/// A signed claim is historical evidence, not an active network permission.
+/// Short-lived credentials can describe *current* verified status; past claims
+/// remain verifiable as evidence of what an issuer attested at issuance.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VerificationKind {
     Person,
@@ -35,7 +37,7 @@ pub struct CredentialClaim {
     pub issuer: IdentityId,
     pub subject: IdentityId,
     pub kind: VerificationKind,
-    /// Exact policy scope, e.g. "US-PA" or "merchant.example"; never inferred.
+    /// Exact local policy scope, e.g. "US-PA"; never inferred.
     pub scope: String,
     pub issued_at: u64,
     pub expires_at: u64,
@@ -47,38 +49,32 @@ pub struct SignedCredential {
     pub signature: [u8; 64],
 }
 
-/// A verifier's LOCAL issuer-authority and revocation policy, not a global
-/// registry. A trusted identity verifier does not automatically authorize a
-/// money transmitter, a merchant, or an ATM operator.
-#[derive(Clone, Debug)]
+/// LOCAL relying-party trust in credential issuers for a kind and scope.
+/// This is not a revocation registry or an authority over an identity.
+///
+/// Financial eligibility, including an agent's current license/status, MUST be
+/// established independently by hawala-protocol before moving money.
+#[derive(Clone, Debug, Default)]
 pub struct VerificationPolicy {
     grants: BTreeSet<(VerificationKind, String, IdentityId)>,
-    revoked: BTreeSet<[u8; 16]>,
-    /// Unix seconds of the latest authoritative revocation check.
-    pub revocation_checked_at: u64,
-    pub max_revocation_age_seconds: u64,
 }
 
 impl VerificationPolicy {
-    pub fn new(revocation_checked_at: u64, max_revocation_age_seconds: u64) -> Self {
-        Self {
-            grants: BTreeSet::new(),
-            revoked: BTreeSet::new(),
-            revocation_checked_at,
-            max_revocation_age_seconds,
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn authorize_issuer(&mut self, kind: VerificationKind, scope: &str, issuer: IdentityId) -> Result<()> {
+    pub fn authorize_issuer(
+        &mut self,
+        kind: VerificationKind,
+        scope: &str,
+        issuer: IdentityId,
+    ) -> Result<()> {
         if !valid_label(scope) {
             return Err(Error::InvalidInput);
         }
         self.grants.insert((kind, scope.to_owned(), issuer));
         Ok(())
-    }
-
-    pub fn revoke(&mut self, credential_id: [u8; 16]) {
-        self.revoked.insert(credential_id);
     }
 
     pub fn allows(&self, kind: VerificationKind, scope: &str, issuer: IdentityId) -> bool {
@@ -120,8 +116,9 @@ pub fn issue_credential(key: &SigningKey, claim: CredentialClaim) -> Result<Sign
     Ok(SignedCredential { claim, signature })
 }
 
-/// Checks signature, subject, exact credential kind and scope, issuer authority,
-/// expiry and revocation freshness. The caller supplies authoritative policy.
+/// Verifies that the issuer signed a claim for this exact subject/kind/scope
+/// during its stated validity interval and is trusted by LOCAL policy.
+/// No network-wide revocation state exists in identity-core.
 pub fn verify_credential(
     credential: &SignedCredential,
     subject: IdentityId,
@@ -141,14 +138,6 @@ pub fn verify_credential(
     }
     if now >= c.expires_at {
         return Err(Error::Expired);
-    }
-    if policy.revocation_checked_at > now
-        || now - policy.revocation_checked_at > policy.max_revocation_age_seconds
-    {
-        return Err(Error::StaleRevocations);
-    }
-    if policy.revoked.contains(&c.credential_id) {
-        return Err(Error::Revoked);
     }
     if !policy.allows(c.kind, &c.scope, c.issuer) {
         return Err(Error::UntrustedIssuer);

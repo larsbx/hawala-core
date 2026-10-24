@@ -25,13 +25,13 @@
 3. Signature messages use domain-separated, length-prefixed v1 encodings.
    Wire interoperability requires exact bytes, version negotiation, and
    test vectors before shipping independent implementations.
-4. Issued identity credentials prove only signed, specified claims. The
-   relying peer must supply issuer authority for each kind and exact scope,
-   a checked revocation snapshot and its freshness threshold. Stale or
-   missing revocation evidence must fail closed.
+4. Identities and signed historical attestations are **not revocable**.
+   Credential verification checks signatures, time bounds, intended subject,
+   kind/scope and locally trusted issuer. An expired assertion is still
+   historical evidence; it is not proof of a *current* status.
 5. Business verification, consumer verification, money-transmitter licensing,
    Hawala-agent authorization and ATM operator approval are distinct claims.
-   Hawala must separately apply financial permissions and law.
+   Hawala must separately apply up-to-date financial permissions and law.
 
 ## Ratings and reputation
 
@@ -55,7 +55,7 @@ This initial milestone does NOT yet implement:
 - Persistent key custody, device recovery, rotation, credential succession,
   or cryptographic nonce generation.
 - Wire serialization of signed objects and forward-compatible encodings.
-- Durable replay storage, credential issuance governance, or revocation feeds.
+- Durable replay storage or credential issuance governance.
 - Privacy-preserving selective disclosure, anti-Sybil enforcement, appeals,
   moderation, or durable evidence retention/deletion policy.
 - Hawala ledger, bilateral trust agreements, obligation state machines,
@@ -63,7 +63,7 @@ This initial milestone does NOT yet implement:
 - Formal security audit or production-ready financial authorization.
 
 **Next engineering milestone:** specify versioned authenticated P2P message
-envelopes, issuer/credential chain and revocation transport, durable nonce
-consumption, and signed transfer-obligation state transitions. Start with
-two-peer convergence and offline replay/adversarial tests before exposing
-customer balances or cash withdrawal.
+envelopes, issuer-credential trust policy and time-bounded verification,
+durable nonce consumption, and signed transfer-obligation state transitions.
+Start with two-peer convergence and offline replay/adversarial tests before
+exposing customer balances or cash withdrawal.

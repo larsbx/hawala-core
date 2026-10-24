@@ -1,3 +1,14 @@
+> Proposed secured-payment extension: see [the protocol](docs/secured-payment-protocol.md),
+> [ADR 0003](docs/decisions/0003-secured-network-credits.md), and
+> [security conformance](docs/security-conformance.md). Temporary transaction QR,
+> receipt-based financial reputation and deposits are specified requirements;
+> current main's static identity QR and generic star ratings do not implement them.
+> The reference safety kernel is not a production ledger or custody service.
+
+Deposit custody supports [independent escrow and federated dar custody through
+one interface](docs/custody-interface.md). Both preserve the same collateral,
+liability and default-recovery rules; live providers remain unconfigured.
+
 # hawala-core
 
 A protocol-first, Iroh-native peer-to-peer **hawala** network. Hawala obligations,

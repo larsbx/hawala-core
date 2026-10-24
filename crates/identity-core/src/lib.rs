@@ -1,6 +1,7 @@
 //! Reusable identity primitives. No network, filesystem, wallet or Hawala ledger dependency.
 //! This is a protocol foundation, NOT a complete identity provider or money-movement system.
 //! Identity and signed history are not revocable; application permissions are separate.
+pub mod continuity;
 mod credential;
 mod identity;
 mod reputation;

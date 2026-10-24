@@ -11,7 +11,7 @@ pub use credential::{
 };
 pub use identity::{
     sign_challenge, verify_and_consume_challenge, Challenge, ChallengeResponse, IdentityId,
-    ReplayGuard,
+    IdentityPresentation, ReplayGuard,
 };
 pub use reputation::{
     evaluate_reputation, sign_rating, sign_receipt, Interaction, ReputationSummary, SignedInteraction,

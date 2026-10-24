@@ -35,6 +35,27 @@ fn qr_is_an_identifier_not_a_bearer_token() {
 }
 
 #[test]
+fn qr_is_always_presented_with_a_legible_identity_code_and_optional_name() {
+    let person = id(1);
+    let card = person.presentation(Some("Cedar Market")).unwrap();
+    assert_eq!(card.display_name.as_deref(), Some("Cedar Market"));
+    assert!(card.identity_code.starts_with("HW-"));
+    assert_eq!(card.identity_code.len(), 17);
+    assert_eq!(IdentityId::parse_qr(&card.qr_payload), Ok(person));
+    assert_eq!(
+        IdentityId::parse_qr(&card.qr_payload).unwrap().human_code(),
+        card.identity_code
+    );
+    assert_ne!(id(2).human_code(), card.identity_code);
+
+    let anonymous = person.presentation(None).unwrap();
+    assert_eq!(anonymous.display_name, None);
+    assert_eq!(anonymous.identity_code, card.identity_code);
+    assert_eq!(person.presentation(Some("")), Err(Error::InvalidInput));
+    assert_eq!(person.presentation(Some(" Padded name ")), Err(Error::InvalidInput));
+}
+
+#[test]
 fn possession_authentication_is_scoped_and_replay_protected() {
     let scanned = id(1);
     let c = Challenge {

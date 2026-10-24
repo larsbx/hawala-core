@@ -14,9 +14,14 @@
 
 ## Identity rules
 
-1. QR is the sole participant **identity-presentation UI**. An identity QR
-   contains a public Ed25519 verification key only. No phone, username,
-   account number, real-world PII, private key or bearer withdrawal token.
+1. QR presents the cryptographic identity, and every QR display must show an
+   adjacent readable **name or identity code**. An identity QR contains a
+   public Ed25519 verification key, not real-world PII, private keys or
+   withdrawal tokens. A stable short human code is derived from the QR key;
+   the scanner recomputes and displays it so the user can compare it with
+   the physical label. Names may be self-declared and are NOT "verified"
+   without separate trusted evidence. Neither name nor short code is an
+   authenticator; financial actions need signed challenge authorization.
 2. Static QR identity is not authentication. Challenge-response binds a
    claimed identity, verifier, nonce, purpose and expiry using a signature.
    Verifiers must generate unpredictably random nonces and atomically persist

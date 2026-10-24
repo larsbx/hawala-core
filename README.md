@@ -2,8 +2,11 @@
 
 A protocol-first, Iroh-native peer-to-peer **hawala** network. Hawala obligations,
 bilateral trust, fulfillment, clearing and settlement are the system's core.
-QR is the only participant identity-presentation interface; ATMs, merchants,
-gift cards and app credits are downstream adapters or applications.
+Every QR identity presentation must include a human-readable name or identity
+code. The public QR key is the cryptographic identifier; the adjacent label
+helps people verify they are interacting with the intended participant.
+ATMs, merchants, gift cards and app credits are downstream adapters or
+applications.
 
 ## Current state
 
@@ -13,6 +16,8 @@ Do **not** represent the current code as a deployed financial network.
 
 The identity crate includes:
 - Persistent Ed25519 public-key identities with `hawala:id:v1:<hex>` QR payloads.
+- QR identity cards with an always-visible public identity code and optional
+  display name; scanned apps recompute the code from the QR key.
 - Challenge-response proof of possession with mandatory injected replay protection.
 - Issuer-, attribute- and scope-specific signed verification evidence with bounded validity.
 - Local issuer trust policy; no revocation registry or centralized identity disablement.
@@ -23,7 +28,8 @@ financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
 See [architecture and limitations](docs/architecture.md) and
-[identity without revocation](docs/decisions/0001-no-identity-revocations.md).
+[identity without revocation](docs/decisions/0001-no-identity-revocations.md)
+and [QR companion labels](docs/decisions/0002-qr-companion-labels.md).
 
 ## Local development
 

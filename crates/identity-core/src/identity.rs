@@ -1,6 +1,16 @@
 use crate::{check_signature, encode, signature, valid_label, Error, Result};
 use ed25519_dalek::{SigningKey, VerifyingKey};
 
+/// A QR plus a human-readable label. Names are self-asserted here; verified
+/// names require a separate signed attribute credential and local issuer policy.
+/// The code is only a short visual cross-check, NOT a secret or authenticator.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IdentityPresentation {
+    pub qr_payload: String,
+    pub display_name: Option<String>,
+    pub identity_code: String,
+}
+
 /// Long-lived identity, independent of Iroh endpoint IDs and transport keys.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct IdentityId([u8; 32]);
@@ -23,6 +33,33 @@ impl IdentityId {
     /// This public identifier is NOT proof of possession or permission to withdraw.
     pub fn qr_payload(&self) -> String {
         format!("hawala:id:v1:{}", hex::encode(self.0))
+    }
+
+    /// Stable visual cross-check derived from the key carried in the QR.
+    ///
+    /// Truncated to 48 bits for readability: collisions are possible. Neither
+    /// this code nor a displayed name may authorize an identity or transaction.
+    pub fn human_code(&self) -> String {
+        let raw = hex::encode(&self.0[..6]);
+        format!("HW-{}-{}-{}", &raw[..4], &raw[4..8], &raw[8..12])
+    }
+
+    /// Present the QR together with at least one legible companion identifier
+    /// (the code is mandatory; a name is optional). No registry or user lookup
+    /// is implied by the name or code.
+    pub fn presentation(&self, display_name: Option<&str>) -> Result<IdentityPresentation> {
+        let name = match display_name {
+            None => None,
+            Some(name) if valid_label(name) && name.trim() == name => {
+                Some(name.to_owned())
+            }
+            Some(_) => return Err(Error::InvalidInput),
+        };
+        Ok(IdentityPresentation {
+            qr_payload: self.qr_payload(),
+            display_name: name,
+            identity_code: self.human_code(),
+        })
     }
 
     pub fn parse_qr(payload: &str) -> Result<Self> {

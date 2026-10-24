@@ -79,7 +79,8 @@ The experimental `hawala-admission` crate checks independently signed,
 transfer-bound eligibility and custody-hold *claims*, and human/machine
 operator-delegation signatures where needed. It does not prove that assets
 are held or that an issuer is legally licensed, and it does not authorize
-a real transaction. See [admission evidence gate](docs/ADMISSION_GATE.md). The journal
+a real transaction. See [admission evidence gate](docs/ADMISSION_GATE.md) and
+[the next single-authority financial commit contract](docs/M6_C_AUTHORITY.md). The journal
 retains those reports without inferring cash delivery or releasing a retry. Its
 signatures attest only to an agreed proposal, not to a regulated permission
 or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md) and

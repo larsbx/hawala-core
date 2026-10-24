@@ -1,0 +1,16 @@
+[package]
+name = "hawala-journal"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Crash-safe single-authority intent and payout uncertainty journal (no cash execution)"
+
+[dependencies]
+hawala-protocol = { path = "../hawala-protocol" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+fs2 = "0.4"
+
+[dev-dependencies]
+ed25519-dalek = "2.1"
+hawala-identity-core = { path = "../identity-core" }
+tempfile = "3"

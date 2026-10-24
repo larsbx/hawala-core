@@ -1,3 +1,14 @@
+> Proposed secured-payment extension: see [the protocol](docs/secured-payment-protocol.md),
+> [ADR 0003](docs/decisions/0003-secured-network-credits.md), and
+> [security conformance](docs/security-conformance.md). Temporary transaction QR,
+> receipt-based financial reputation and deposits are specified requirements;
+> current main's static identity QR and generic star ratings do not implement them.
+> The reference safety kernel is not a production ledger or custody service.
+
+Deposit custody supports [independent escrow and federated dar custody through
+one interface](docs/custody-interface.md). Both preserve the same collateral,
+liability and default-recovery rules; live providers remain unconfigured.
+
 # hawala-core
 
 A protocol-first, Iroh-native peer-to-peer **hawala** network. Hawala obligations,
@@ -26,8 +37,8 @@ The identity crate includes:
 - Mutually signed interaction evidence and domain-specific verified ratings.
 - A four-message mutual, CSPRNG-challenged, session-scoped handshake over
   authenticated Iroh 1.4.1 QUIC; includes a real local two-peer integration test.
-- An optional local SQLite replay guard, persisting nonce consumption atomically
-  across crashes and process restarts; per-frame Iroh handshake deadlines.
+- Optional SQLite replay guard, durable identity nonce consumption across
+  restarts and bounded per-frame handshake deadlines.
   Identity proof never confers financial rights.
 
 The new `hawala-protocol` crate models dual-signed accepted obligations,
@@ -36,11 +47,16 @@ reconciliation across temporarily disconnected peers. This is **not** an
 execution ledger: signed attestations are not evidence of physical cash
 delivery or legally final settlement.
 
+The experimental `hawala-journal` crate records dual-signed transfer
+intents, one-way dispense-attempt transitions, and crash recovery to
+`uncertain`. It does not execute cash transfers or reconcile real hardware.
+
 Its identity/reputation logic is intentionally independent of Hawala's future
 financial ledger and of biz-kit. Neither ratings nor credentials themselves
 grant authority to move customer funds.
 
-See [durable identity replay protection](docs/durable-replay.md),
+See [crash-safe payout intent journal](docs/durable-payout-journal.md),
+[durable replay protection](docs/durable-replay.md),
 [bilateral obligation evidence](docs/bilateral-obligations.md),
 [Iroh identity binding](docs/iroh-identity-binding.md),
 [on-wire handshake](docs/iroh-wire-handshake.md) and

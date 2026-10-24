@@ -49,7 +49,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | Temporary QR authorization proof | PR #14 merged; financial commit coupling still absent | Authenticator-bound QR, funds held, safe payout gate, full audit |
 | **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 merged | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
-| P1 | Exact balanced reference ledger | PR #17 open; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
+| P1 | Exact balanced reference ledger | PR #17 merged; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
 | P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
@@ -126,11 +126,12 @@ provider agreements, cash-in authentication, or independent security review.
 - **M6-B** Implement a strict in-memory double-entry accounting model
   with exact per-currency balance, idempotency, account typing and atomic
   failure semantics (PR #17). This is not customer funding or custody.
-- **M6-C** Join live eligibility/custody evidence, exact quote, authorized
-  ledger reservations and a one-time QR/attempt journal into ONE serialized
-  durable state transaction with epoch fencing and crash recovery; do not
-  permit physical cash commands before external audit and live custodial
-  reconciliation.
+- **M6-C** Detailed [single-authority commit boundary](M6_C_AUTHORITY.md):
+  join live eligibility/custody evidence, exact quote, protected credit lots,
+  per-currency ledger postings and nonce/attempt in ONE serialized durable
+  state transaction with epoch fencing and crash recovery. Implementation
+  and independent custody/provider reconciliation remain open; do not
+  permit physical cash commands before external audit.
 
 **Delivery rule:** Security-sensitive code is not merge-ready just because
 GitHub reports a PR as mergeable. Require completed CI and targeted review;

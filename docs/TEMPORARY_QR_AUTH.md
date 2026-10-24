@@ -78,3 +78,10 @@ incorrect amount/currency, malformed QR and replay.
 transaction, bind it to the durable human/ATM attempt journal, and test
 crash and network partition around the commit boundary before connecting
 actual machines.
+
+## Atomic local cash-out intent
+
+The next change introduces the journal-side `begin_qr_cashout_intent` to
+consume a signed temporary QR nonce in the SAME local SQLite commit as one
+cash-out attempt. It is not a balance debit or collateral reservation.
+See [M6 atomic local intent](QR_ATOMIC_INTENT.md).

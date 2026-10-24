@@ -7,6 +7,9 @@ use fs2::FileExt;
 use hawala_protocol::{ObligationEvidence, SignedTerms};
 use hawala_atm::{Capabilities, ReportClass, SignedTerminalObservation};
 use hawala_human::SignedHandoff;
+use hawala_flow::{bind, FlowKind, Role};
+use hawala_interaction::{AgreedInteraction, ParticipantKind};
+use hawala_qr_auth::{verify_signed, SignedAuthorization};
 use hawala_identity_core::IdentityId;
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 
@@ -23,6 +26,8 @@ pub enum JournalError {
     UntrustedTerminal,
     InvalidTerminalEvidence,
     InvalidHandoffEvidence,
+    InvalidQrAuthorization,
+    AuthorizationReplay,
 }
 impl From<std::io::Error> for JournalError {
     fn from(value: std::io::Error) -> Self { Self::Io(value) }
@@ -118,6 +123,15 @@ impl Journal {
                  receipt_id BLOB NOT NULL CHECK(length(receipt_id) = 32),
                  evidence_digest BLOB NOT NULL CHECK(length(evidence_digest) = 32),
                  asserted_at INTEGER NOT NULL
+             ) WITHOUT ROWID;
+             CREATE TABLE IF NOT EXISTS qr_attempt_authorizations(
+                 transfer_id BLOB PRIMARY KEY CHECK(length(transfer_id) = 32),
+                 holder BLOB NOT NULL CHECK(length(holder) = 32),
+                 verifier BLOB NOT NULL CHECK(length(verifier) = 32),
+                 qr_nonce BLOB NOT NULL CHECK(length(qr_nonce) = 32),
+                 attempt_id BLOB NOT NULL CHECK(length(attempt_id) = 32),
+                 proof_digest BLOB NOT NULL CHECK(length(proof_digest) = 32),
+                 UNIQUE(holder, verifier, qr_nonce)
              ) WITHOUT ROWID;",
         )?;
         // Forward-compatible migration of the M5-A single-authority database.
@@ -435,6 +449,98 @@ impl Journal {
         let db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
         let present: Option<i64> = db.query_row(
             "SELECT 1 FROM human_reports WHERE transfer_id = ?1",
+            params![transfer_id.as_slice()], |r| r.get(0),
+        ).optional()?;
+        Ok(present.is_some())
+    }
+
+
+    /// Record a verified dynamic QR proof and commit exactly ONE intended
+    /// cash-out attempt in the SAME local SQLite transaction. No external cash
+    /// command or balance/collateral mutation is executed here. In particular
+    /// this is NOT a financial authorization or regulated funding ledger.
+    ///
+    /// A future production entrypoint must require independently established
+    /// operator delegation, funding/collateral capacity, sender/recipient
+    /// eligibility, fees and quote acceptance, all atomically reconciled
+    /// with the actual financial authority. Current single-node SQLite does
+    /// not solve P2P double spending or cross-device identity-key reuse.
+    pub fn begin_qr_cashout_intent(
+        &self,
+        accepted: &SignedTerms,
+        agreed: &AgreedInteraction,
+        authorization: &SignedAuthorization,
+        expected_qr_nonce: [u8; 32],
+        expected_challenge: [u8; 32],
+        expected_session: [u8; 32],
+        expected_verifier: IdentityId,
+        now: u64,
+    ) -> Result<()> {
+        let flow = bind(accepted, agreed, now)
+            .map_err(|_| JournalError::InvalidQrAuthorization)?;
+        if flow.kind() != FlowKind::CashOut {
+            return Err(JournalError::InvalidQrAuthorization);
+        }
+        let proof = verify_signed(
+            authorization, accepted, agreed,
+            expected_qr_nonce, expected_challenge, expected_session,
+            expected_verifier, now,
+        ).map_err(|_| JournalError::InvalidQrAuthorization)?;
+        let transfer_id = proof.transfer_id();
+        let attempt_id = proof.attempt_id();
+        let qr_nonce = proof.qr_nonce();
+        let proof_digest = proof.proof_digest();
+        let terms_digest = proof.terms_digest();
+        let intent = agreed.intent();
+        let cash_peer = match flow.initiator_role() {
+            Role::Left => intent.responder,
+            Role::Right => intent.initiator,
+        };
+        let terminal: Option<Vec<u8>> = match cash_peer.kind {
+            ParticipantKind::Machine => Some(cash_peer.identity.as_bytes().to_vec()),
+            ParticipantKind::Human => None,
+        };
+        let mut db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        // Unique nonce is permanent (no TTL pruning), scoped by both full
+        // identities. On ANY failure the nonce and state change roll back.
+        let inserted = tx.execute(
+            "INSERT INTO qr_attempt_authorizations(
+                transfer_id, holder, verifier, qr_nonce, attempt_id, proof_digest
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+             ON CONFLICT DO NOTHING",
+            params![
+                transfer_id.as_slice(),
+                proof.holder().as_bytes().as_slice(),
+                proof.verifier().as_bytes().as_slice(),
+                qr_nonce.as_slice(),
+                attempt_id.as_slice(),
+                proof_digest.as_slice(),
+            ],
+        )?;
+        if inserted != 1 { return Err(JournalError::AuthorizationReplay); }
+        let changed = tx.execute(
+            "UPDATE obligations
+             SET phase = 'dispensing', attempt_id = ?2, terminal_id = ?3
+             WHERE transfer_id = ?1 AND terms_digest = ?4
+               AND phase = 'registered'",
+            params![
+                transfer_id.as_slice(),
+                attempt_id.as_slice(),
+                terminal,
+                terms_digest.as_slice()
+            ],
+        )?;
+        if changed != 1 { return Err(JournalError::InvalidTransition); }
+        append_event(&tx, &transfer_id, "qr_authorized_intent")?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    pub fn qr_authorization_recorded(&self, transfer_id: [u8; 32]) -> Result<bool> {
+        let db = self.db.lock().map_err(|_| JournalError::StoragePoisoned)?;
+        let present: Option<i64> = db.query_row(
+            "SELECT 1 FROM qr_attempt_authorizations WHERE transfer_id = ?1",
             params![transfer_id.as_slice()], |r| r.get(0),
         ).optional()?;
         Ok(present.is_some())

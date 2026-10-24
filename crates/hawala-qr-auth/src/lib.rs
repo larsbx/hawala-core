@@ -121,6 +121,37 @@ pub struct SignedAuthorization {
 }
 impl SignedAuthorization {
     pub fn request(&self) -> &AuthorizationRequest { &self.request }
+    /// Identifies the exact authorization evidence retained by the
+    /// transaction journal, not a financial settlement or withdrawal ID.
+    pub fn digest(&self) -> [u8; 32] {
+        let mut h = blake3::Hasher::new_derive_key("hawala/qr-auth-proof/v1");
+        h.update(&self.request.message());
+        h.update(&self.signature);
+        *h.finalize().as_bytes()
+    }
+}
+
+/// This verified evidence is deliberately NOT a spend or custody permit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VerifiedAuthorization {
+    holder: IdentityId,
+    verifier: IdentityId,
+    transfer_id: [u8; 32],
+    terms_digest: [u8; 32],
+    attempt_id: [u8; 32],
+    qr_nonce: [u8; 32],
+    proof_digest: [u8; 32],
+    expires_at: u64,
+}
+impl VerifiedAuthorization {
+    pub fn holder(&self) -> IdentityId { self.holder }
+    pub fn verifier(&self) -> IdentityId { self.verifier }
+    pub fn transfer_id(&self) -> [u8; 32] { self.transfer_id }
+    pub fn terms_digest(&self) -> [u8; 32] { self.terms_digest }
+    pub fn attempt_id(&self) -> [u8; 32] { self.attempt_id }
+    pub fn qr_nonce(&self) -> [u8; 32] { self.qr_nonce }
+    pub fn proof_digest(&self) -> [u8; 32] { self.proof_digest }
+    pub fn expires_at(&self) -> u64 { self.expires_at }
 }
 
 /// Checks accepted Hawala terms and both signed peer roles before signing
@@ -195,6 +226,31 @@ pub fn verify_and_consume(
     now: u64,
     guard: &impl ReplayGuard,
 ) -> Result<()> {
+    let proof = verify_signed(
+        signed, accepted, agreed, expected_qr_nonce, expected_challenge,
+        expected_session, expected_verifier, now,
+    )?;
+    match guard.consume_once(proof.verifier(), proof.holder(), proof.qr_nonce()) {
+        Ok(true) => Ok(()),
+        Ok(false) => Err(Error::Replay),
+        Err(_) => Err(Error::Storage),
+    }
+}
+
+/// Signature-only verification for callers that must consume a nonce in the
+/// SAME SQLite transaction as an intent/attempt mutation. Do not use this
+/// API in isolation as proof that a financial transaction was approved or
+/// actually executed.
+pub fn verify_signed(
+    signed: &SignedAuthorization,
+    accepted: &SignedTerms,
+    agreed: &AgreedInteraction,
+    expected_qr_nonce: [u8; 32],
+    expected_challenge: [u8; 32],
+    expected_session: [u8; 32],
+    expected_verifier: IdentityId,
+    now: u64,
+) -> Result<VerifiedAuthorization> {
     let r = &signed.request;
     check_flow(r, accepted, agreed, now)?;
     if r.verifier != expected_verifier { return Err(Error::WrongAudience); }
@@ -206,9 +262,10 @@ pub fn verify_and_consume(
     let pk = VerifyingKey::from_bytes(r.holder.as_bytes()).map_err(|_| Error::InvalidSignature)?;
     pk.verify_strict(&r.message(), &Signature::from_bytes(&signed.signature))
         .map_err(|_| Error::InvalidSignature)?;
-    match guard.consume_once(r.verifier, r.holder, r.qr_nonce) {
-        Ok(true) => Ok(()),
-        Ok(false) => Err(Error::Replay),
-        Err(_) => Err(Error::Storage),
-    }
+    Ok(VerifiedAuthorization {
+        holder: r.holder, verifier: r.verifier,
+        transfer_id: r.transfer_id, terms_digest: r.terms_digest,
+        attempt_id: r.attempt_id, qr_nonce: r.qr_nonce,
+        proof_digest: signed.digest(), expires_at: r.expires_at,
+    })
 }

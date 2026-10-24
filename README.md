@@ -64,13 +64,16 @@ terms, independently of whether the presenter is a human or machine.
 The `hawala-human` crate supports signed beneficiary↔disbursing-hawaladar
 handoff assertions bound to a single durable cash attempt.
 The `hawala-qr-auth` crate adds temporary, verifier/session/attempt-bound
-QR authorization evidence for every human/machine pairing; it is not an
-atomic financial authorization service. The journal
+QR authorization evidence for every human/machine pairing.
+The journal can now store nonce consumption and the one permitted *intent*
+in one SQLite transaction, but **no customer balance/custody reservation,
+real cash command or financial authorization** is implemented. The journal
 retains those reports without inferring cash delivery or releasing a retry. Its
 signatures attest only to an agreed proposal, not to a regulated permission
 or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md) and
 [common flow binding](docs/COMMON_FLOW.md) and
-[temporary QR authorization](docs/TEMPORARY_QR_AUTH.md).
+[temporary QR authorization](docs/TEMPORARY_QR_AUTH.md) and
+[atomic local QR intent](docs/QR_ATOMIC_INTENT.md).
 
 The **ATM-first hardware** prototype defines signed, bounded terminal observations,
 trusted terminal/attempt binding in the durable journal, and conservative

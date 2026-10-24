@@ -45,10 +45,11 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
-| P0 | Temporary QR authorization proof | PR #14 open; financial commit coupling still absent | Authenticator-bound QR, funds held, safe payout gate, full audit |
+| **P0** | **Local atomic nonce and payout-intent journal** | PR #15 pending CI; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |
+| P0 | Temporary QR authorization proof | PR #14 merged; financial commit coupling still absent | Authenticator-bound QR, funds held, safe payout gate, full audit |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Clearing, double-entry and custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
-| P0 | Human-agent cash handoff and signed receipt evidence | PR #13 open | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
+| P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
 
 No human or automated teller may accept/disburse real customer funds on the
@@ -110,10 +111,11 @@ provider agreements, cash-in authentication, or independent security review.
 - **ATM-C** Build a simulated cash dispenser/recycler with deterministic
   interruption scenarios and callback reconciliation. Include deposits as
   non-spendable pending claims until cash acceptance is confirmed.
-- **ATM-D** Implement temporary, transaction-/verifier-/session-bound
-  signed QR approval (PR #14). Still required: binding authenticator keys
-  to trusted devices and atomic once-only ledger/custody reservation
-  before human or ATM cash commands.
+- **ATM-D** Merged temporary, transaction-/verifier-/session-bound
+  signed QR approval (#14) and added one local atomic nonce+intent transaction
+  (PR #15). Still required: binding authenticator keys to trusted devices,
+  verified delegation, and atomic **real financial ledger/custody**
+  reservation before human or ATM cash commands.
 - **M6-A** Bilateral exposure/eligibility hard stop, custody integration,
   regulatory controls and financial double-entry remain prerequisites.
 

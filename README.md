@@ -57,9 +57,13 @@ intents, one-way dispense-attempt transitions, and crash recovery to
 `uncertain`. It does not execute cash transfers or reconcile real hardware.
 
 The `hawala-interaction` crate models directional human/machine combinations
-and dual-signed interaction context bound to a Hawala obligation digest. Its
+and dual-signed interaction context bound to a Hawala obligation digest.
+The `hawala-flow` crate additionally verifies each side represents the
+correct economic principal of the **exact** dual-signed accepted Hawala
+terms, independently of whether the presenter is a human or machine. Its
 signatures attest only to an agreed proposal, not to a regulated permission
-or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md).
+or a successful cash transfer. See [universal peer modes](docs/PEER_MODES.md) and
+[common flow binding](docs/COMMON_FLOW.md).
 
 The **ATM-first hardware** prototype defines signed, bounded terminal observations,
 trusted terminal/attempt binding in the durable journal, and conservative

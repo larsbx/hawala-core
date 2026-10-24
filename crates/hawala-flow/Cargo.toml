@@ -1,0 +1,14 @@
+[package]
+name = "hawala-flow"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Uniform structural binding of human/machine Hawala interactions to accepted bilateral obligations"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+hawala-interaction = { path = "../hawala-interaction" }
+hawala-protocol = { path = "../hawala-protocol" }
+
+[dev-dependencies]
+ed25519-dalek = "2.1"

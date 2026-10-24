@@ -145,10 +145,10 @@ fn all_oriented_human_machine_cases_preflight_identical_financial_terms() {
                 let result=admit_preview(&f.envelope(),&original,140);
                 match result {
                     Decision::Prepared(plan)=>{
-                        assert_eq!(plan.transfer_id,[10;32]);
-                        assert_eq!(plan.attempt_id,[22;32]);
-                        assert_eq!(plan.payout_minor,900);
-                        assert_eq!(plan.ledger_event_id,reserve_event_id([10;32]));
+                        assert_eq!(plan.transfer_id(),[10;32]);
+                        assert_eq!(plan.attempt_id(),[22;32]);
+                        assert_eq!(plan.payout_minor(),900);
+                        assert_eq!(plan.ledger_event_id(),reserve_event_id([10;32]));
                     }
                     other=>panic!("fixture should preflight: {other:?}")
                 }

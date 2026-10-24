@@ -51,6 +51,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Exact balanced reference ledger | PR #17 merged; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
 | P1 | Typed M6-C1 authority admission preflight | PR #19 open; pure model only | Signed evidence + exact quote arithmetic + journal preview + fail-closed holds |
+| P1 | Synthetic atomic ledger/QR/attempt demonstration | PR #20 open, not custody-backed | Single SQLite account hold, QR nonce, attempt ID and version in one commit; no hardware |
 | P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
@@ -131,6 +132,9 @@ provider agreements, cash-in authentication, or independent security review.
   `admit_preview` with combined signed evidence, reference FX arithmetic,
   explicit external review reports and balanced ledger proposal (PR #19).
   It does NOT commit customer funds or verify real custodian assets.
+- **M6-C2** Implemented a synthetic SQLite proof of atomic liability reserve,
+  QR nonce/event tombstones, unique payout attempt and epoch/version fencing,
+  with idempotent crash recovery (PR #20). This is NOT real custody or funds.
 - **M6-C** Detailed [single-authority commit boundary](M6_C_AUTHORITY.md):
   join live eligibility/custody evidence, exact quote, protected credit lots,
   per-currency ledger postings and nonce/attempt in ONE serialized durable

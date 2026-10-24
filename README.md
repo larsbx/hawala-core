@@ -69,6 +69,12 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
+The `hawala-ledger` crate provides a finite, exact reference double-entry
+invariant checker: balanced postings PER currency, nonnegative asset and
+liability accounts, deterministic idempotency and rejected tampering.
+This is in-memory only, with no customer funds or custody integration.
+See [reference accounting](docs/REFERENCE_LEDGER.md).
+
 The experimental `hawala-admission` crate checks independently signed,
 transfer-bound eligibility and custody-hold *claims*, and human/machine
 operator-delegation signatures where needed. It does not prove that assets

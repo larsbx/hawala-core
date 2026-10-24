@@ -1,5 +1,6 @@
 //! Reusable identity primitives. No network, filesystem, wallet or Hawala ledger dependency.
 //! This is a protocol foundation, NOT a complete identity provider or money-movement system.
+//! Identity and signed history are not revocable; application permissions are separate.
 mod credential;
 mod identity;
 mod reputation;
@@ -10,7 +11,7 @@ pub use credential::{
 };
 pub use identity::{
     sign_challenge, verify_and_consume_challenge, Challenge, ChallengeResponse, IdentityId,
-    ReplayGuard,
+    IdentityPresentation, ReplayGuard,
 };
 pub use reputation::{
     evaluate_reputation, sign_rating, sign_receipt, Interaction, ReputationSummary, SignedInteraction,
@@ -27,9 +28,7 @@ pub enum Error {
     BadSignature,
     Expired,
     NotYetValid,
-    StaleRevocations,
     UntrustedIssuer,
-    Revoked,
     PermissionDenied,
     Replay,
     DuplicateRating,

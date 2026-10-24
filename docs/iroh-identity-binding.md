@@ -4,7 +4,7 @@ This milestone bridges cryptographically authenticated Iroh transport with
 QR-presented, human-readable Hawala identity. It is **not** a full P2P message
 exchange and must not be interpreted as authorization to transfer funds.
 
-## Identity handshake (protocol contract, not yet an on-wire implementation)
+## Identity handshake (M2 protocol contract; on-wire implementation in M4)
 
 1. The user scans a full Hawala identity QR and compares the adjacent human
    name/code. The short code cannot substitute for the full public key.
@@ -43,10 +43,10 @@ exchange and must not be interpreted as authorization to transfer funds.
 
 ## Not yet implemented
 
-Authenticated on-wire framing and serialization, Iroh connection lifecycle
-and discovery, session teardown, key rotation/recovery, CSPRNG nonce creation,
-durable nonce storage, denial-of-service controls, reputation sharing,
-signed obligations, clearing and settlement. A real online two-peer test,
+Durable nonce storage, endpoint addressing/discovery, key rotation/recovery,
+denial-of-service controls and authenticated financial envelopes, clearing and
+real settlement. M4 now has bounded on-wire handshake framing, nonce generation
+and a local two-peer Iroh test; M3 has signed obligation evidence only. A real online two-peer test,
 including relay and network partition, is required before production.
 
 The `hawala-iroh-bridge` crate is intentionally thin: it accepts an already

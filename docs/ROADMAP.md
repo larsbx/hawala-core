@@ -11,9 +11,9 @@ app credits and gift cards are downstream products, not the core protocol.
 | Milestone | Status | Required evidence before advancing |
 | --- | --- | --- |
 | M1 QR identity, verified evidence, ratings | PRs #1–#2 merged | Rust CI, adversarial proof checks; original merges alone do not prove deployment readiness |
-| M2 Authenticated Iroh endpoint ↔ QR identity association | PR #3 open | Compile against pinned Iroh; tests for wrong endpoint/QR, expiry, signed-context mutation and nonce reuse |
-| M3 Two-party obligations and distinct payout/settlement evidence | PR #4 open; stacked on #3 | Full signature/FX tampering tests, order-independent reconciliation and equivocation detection |
-| M4 Real authenticated on-wire Iroh protocol | Not started | Two live peers, bounded framed messages, reciprocal authentication, protocol versioning, message size limits; no 0-RTT for financial actions |
+| M2 Authenticated Iroh endpoint ↔ QR identity association | PR #3 merged | Compile against pinned Iroh; tests for wrong endpoint/QR, expiry, signed-context mutation and nonce reuse |
+| M3 Two-party obligations and distinct payout/settlement evidence | PR #4 merged | Full signature/FX tampering tests, order-independent reconciliation and equivocation detection |
+| M4 Real authenticated on-wire Iroh protocol | M4-A implemented on branch; awaiting CI | Two live peers, bounded framed messages, reciprocal authentication, protocol versioning, message size limits; no 0-RTT for financial actions |
 | M5 Durable financial execution journal | Not started | Crash-replay tests, authenticated atomic idempotency/reservation, definite vs indeterminate cash-dispense outcomes, external machine reconciliation |
 | M6 Bilateral trust, liquidity and compliance | Not started | Explicit authorized operating jurisdictions/roles, verified current financial eligibility, limits and risk decisions, auditable denial |
 | M7 Clearing and real settlement | Not started | Double-entry posting, external settlement attestations, netting only with counterparty agreement, no payout↔settlement equivalence |
@@ -46,11 +46,13 @@ app credits and gift cards are downstream products, not the core protocol.
 
 ## Next concrete implementation tasks
 
-- **M4-A** Implement bounded, versioned bidirectional Iroh handshake messages
-  using the M2 proof primitives. Both endpoints must compare the scanned
-  QR identity, signed proof and authenticated remote endpoint.
-- **M4-B** Define canonical wire encodings and stable positive/negative
-  protocol test vectors. Strictly reject unknown critical fields.
+- **M4-A** Implement bounded, versioned mutual Iroh handshake messages
+  using M2 proof primitives, comparing independently scanned full QR identities
+  and authenticated remote endpoints. Implemented in PR #5; merge requires CI.
+- **M4-B** Expand binary wire interoperability vectors and live adversarial
+  peer tests (malformed/reordered/replayed frames, intentionally mismatched
+  QR expectations, relay/network partition and reconnect). No critical
+  extension fields are supported in the current exact-length v1 frames.
 - **M4-C** Implement durable nonce consumption, journaled once-only event IDs,
   and explicit timeout/clock-skew handling. Network partitions are normal.
 - **M5-A** Prototype a crash-safe single-authority obligation journal with

@@ -79,17 +79,32 @@ pub enum HoldReason {
 pub struct PreviewPlan {
     /// Opaque digest for a subsequent independently-authorized state commit.
     /// It is NOT a token accepted by financial services or cash equipment.
-    pub plan_digest: [u8; 32],
-    pub transfer_id: [u8; 32],
-    pub attempt_id: [u8; 32],
-    pub nonce: [u8; 32],
-    pub ledger_event_id: [u8; 32],
-    pub authority_epoch: u64,
-    pub account_version: u64,
-    pub custody_account_version: u64,
-    pub currency: [u8; 3],
-    pub payout_minor: u64,
+    plan_digest: [u8; 32],
+    balance_checkpoint: [u8; 32],
+    transfer_id: [u8; 32],
+    attempt_id: [u8; 32],
+    nonce: [u8; 32],
+    ledger_event_id: [u8; 32],
+    authority_epoch: u64,
+    account_version: u64,
+    custody_account_version: u64,
+    currency: [u8; 3],
+    payout_minor: u64,
 }
+impl PreviewPlan {
+    pub fn plan_digest(&self)->[u8;32] {self.plan_digest}
+    pub fn balance_checkpoint(&self)->[u8;32] {self.balance_checkpoint}
+    pub fn transfer_id(&self)->[u8;32] {self.transfer_id}
+    pub fn attempt_id(&self)->[u8;32] {self.attempt_id}
+    pub fn nonce(&self)->[u8;32] {self.nonce}
+    pub fn ledger_event_id(&self)->[u8;32] {self.ledger_event_id}
+    pub fn authority_epoch(&self)->u64 {self.authority_epoch}
+    pub fn account_version(&self)->u64 {self.account_version}
+    pub fn custody_account_version(&self)->u64 {self.custody_account_version}
+    pub fn currency(&self)->[u8;3] {self.currency}
+    pub fn payout_minor(&self)->u64 {self.payout_minor}
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Decision {
     Rejected(RejectReason),
@@ -197,6 +212,7 @@ pub fn admit_preview(
         h.update(&(bytes.len() as u32).to_be_bytes());
         h.update(bytes);
     }
+    let mut balance_hasher = blake3::Hasher::new_derive_key("hawala/reference-ledger-before/v1");
     for p in postings {
         let account = match book.account(p.account) {
             Some(a) => a,
@@ -204,6 +220,18 @@ pub fn admit_preview(
         };
         h.update(&p.account);
         h.update(&account.currency);
+        balance_hasher.update(&p.account);
+        balance_hasher.update(&account.currency);
+        let normal = match account.normal {
+            hawala_ledger::NormalSide::Debit => 1,
+            hawala_ledger::NormalSide::Credit => 2,
+        };
+        balance_hasher.update(&[normal]);
+        let before = match book.balance(p.account) {
+            Some(n) => n,
+            None => return Decision::Rejected(RejectReason::InvalidLedgerEntry),
+        };
+        balance_hasher.update(&before.to_be_bytes());
         h.update(&[match account.normal {
             hawala_ledger::NormalSide::Debit => 1,
             hawala_ledger::NormalSide::Credit => 2,
@@ -211,8 +239,11 @@ pub fn admit_preview(
         h.update(&p.debit_minor.to_be_bytes());
         h.update(&p.credit_minor.to_be_bytes());
     }
+    let balance_checkpoint = *balance_hasher.finalize().as_bytes();
+    h.update(&balance_checkpoint);
     Decision::Prepared(PreviewPlan {
         plan_digest: *h.finalize().as_bytes(),
+        balance_checkpoint,
         transfer_id: t.transfer_id,
         attempt_id: signed.attempt_id,
         nonce: a.qr.request().qr_nonce,

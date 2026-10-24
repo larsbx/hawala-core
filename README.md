@@ -69,6 +69,12 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
+The `hawala-commit-sim` crate demonstrates one synthetic, crash-durable
+SQLite transaction for moving a test customer liability into a reserved
+liability while atomically tombstoning a QR nonce, transfer and attempt.
+It has no real money, custody or cash execution API.
+See [M6-C2 synthetic atomicity](docs/M6_C2_ATOMIC_SIM.md).
+
 The `hawala-authority` crate adds a pure `admit_preview` for the accepted
 Hawala obligation, signed QR consent, eligibility, signed custody claims,
 device delegation, FX arithmetic and balanced draft postings. It returns

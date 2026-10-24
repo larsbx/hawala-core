@@ -1,0 +1,22 @@
+[package]
+name = "hawala-commit-sim"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Single SQLite transaction proof-of-concept for synthetic Hawala payout reservations; NO real funds"
+
+[dependencies]
+hawala-authority = { path = "../hawala-authority" }
+hawala-ledger = { path = "../hawala-ledger" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+fs2 = "0.4"
+blake3 = "1.8"
+
+[dev-dependencies]
+tempfile = "3"
+ed25519-dalek = "2.1"
+hawala-admission = { path = "../hawala-admission" }
+hawala-identity-core = { path = "../identity-core" }
+hawala-interaction = { path = "../hawala-interaction" }
+hawala-protocol = { path = "../hawala-protocol" }
+hawala-qr-auth = { path = "../hawala-qr-auth" }

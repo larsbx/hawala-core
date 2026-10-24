@@ -35,10 +35,11 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 
 | Priority | Milestone | Current state | Exit criteria |
 | --- | --- | --- | --- |
-| **P0** | **Human/human, human/machine, machine/machine symmetric interactions** | PR #11 new universal evidence crate; six directional peer cases reduce to four oriented modes | Signed contexts, no unverified machine authority |
+| **P0** | **Human/human, human/machine, machine/machine symmetric interactions** | PR #11 merged; signed exact-context agreements | Signed contexts, no unverified machine authority |
 | P0 | QR + name/code, identity and Iroh | PRs #1–#3, #6 merged | Live mutual peer authentication; no sensitive data on public gossip |
 | P0 | Accepted bilateral Hawala obligations | PR #4 merged | Signed exact terms, FX acceptance, payout != settlement |
 | P0 | Secured payment and deposits specification | PR #5 merged | External custody, liability policy and legal controls before real funds |
+| **P0** | **Unified flow binding across people and machines** | PR #12 open | Verify each signer represents the exact economic principal from dual-agent accepted terms, any orientation; no financial authority |
 | P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
 | **P0** | **ATM identity, capability and outcome reporting** | **PR #9 merged** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
@@ -94,6 +95,9 @@ provider agreements, cash-in authentication, or independent security review.
   QR-identity pair, directional participant kinds, role/operation, nonce,
   accepted Hawala obligation digest and expiry. Require both signatures;
   no financial authority follows from participation.
+- **PEER-A2** Bind all human/device interaction intents to the exact bilateral
+  Hawala obligation and correct principals; use one common validation path
+  for cash-in, cash-out, transfer, reconciliation (PR #12).
 - **PEER-B** Integrate verified Iroh sessions, durable replay consumption,
   trustworthy person/terminal roles, and human receipts or device telemetry
   into one transaction-flow adapter (not yet implemented).

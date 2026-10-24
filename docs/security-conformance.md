@@ -51,6 +51,15 @@ Review is an author security pass, not independent audit or religious approval.
 Hosted Rust tests, ledger concurrency/crash tests, custodian enforceability,
 Hanbali contract review and concrete wire schemas remain launch gates.
 
+## Custody-mode conformance
+
+Both supported custody modes must satisfy CU01–CU13 in
+[custody-interface.md](custody-interface.md): replay/conflicting payloads,
+reservation/withdrawal races, orphaned reservations, uncertain external payouts,
+cross-adapter duplicate recovery, federation approval rules, old-epoch replay,
+migration omissions, duplicate asset backing and independently anchored mandates.
+These are required integration scenarios; no live adapter test is claimed.
+
 ## Continuity encoding fixture
 
 Public test seeds are the byte n repeated 32 times (NEVER operational keys).

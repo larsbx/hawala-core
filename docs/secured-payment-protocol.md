@@ -104,6 +104,13 @@ transfer, collateral release or payout in this initial profile.
 
 ## 5. Deposits and secured capacity
 
+Independent escrow and federated dar custody MUST both be supported through
+the [custody interface](custody-interface.md). Select a configured adapter per
+account; do not assume a central custodian or a fixed federation quorum. Both
+modes enforce the same economic invariants. Authenticated account/version/epoch
+receipts, idempotent commands, external-execution reconciliation and fenced
+migration are required as specified there.
+
 Every dar MUST post a verified deposit under a custody agreement before
 accepting exposure. Deposit evidence binds asset, amount, currency, dar,
 custodian, asset/lot reference, custody mandate, senior liens, withdrawal
@@ -299,6 +306,7 @@ payloads travel over authenticated Iroh sessions to authorized peers only.
 ## 12. Required deployment decisions and launch gates
 
 The protocol is parameterized; an unfilled profile MUST reject money movement.
+Supporting both custody modes is an agreed requirement, not an unfilled choice.
 Before launch an agreement must name: (a) exact origin/backing legal liabilities
 and customer recourse; (b) collateral custodian, verified assets, segregation,
 liens and enforcement; (c) adjudicator, notice, appeals and executor mandates;

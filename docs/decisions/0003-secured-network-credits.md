@@ -15,6 +15,8 @@ fiqh certification is implied. Extends ADRs 0001–0002. Normative protocol:
 - Receiving currency, exact exchange rate, net amount and fees are accepted
   at the exchange. A completed exchange creates credit in the receiving currency.
 - Every dar provides a deposit. Accepted obligations consume secured capacity.
+- Support independent escrow and shared dar custody through the same
+  [custody interface](../custody-interface.md); choose the mode per account.
 - Reputation derives from verifiable receipt of funds, not arbitrary stars.
 - Persistent identities and signed historical evidence are not revoked.
 
@@ -66,6 +68,12 @@ Iroh: authenticated transport and evidence exchange. It does not establish
 ledger finality, a complete history, funds possession or financial permission.
 
 ## Trust and implementation limits
+
+The custody-mode decision is settled: both are supported. Actual providers,
+federation controllers/approval rules and enforcement mandates remain deployment
+configuration. Neither mode can bypass reservations, historical liabilities or
+default adjudication. Custody-controller succession is distinct from participant
+identity succession and requires asset-level fencing.
 
 External cash acceptance, collateral custody, witness honesty and award
 enforcement remain explicit trust assumptions. Colluding parties can sign false

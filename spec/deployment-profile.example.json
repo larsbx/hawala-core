@@ -3,7 +3,19 @@
   "status": "UNCONFIGURED_NO_MONEY_MOVEMENT",
   "network_id": null,
   "liability_agreement": null,
-  "custodian_and_asset_verification": null,
+  "custody_interface": {
+    "version": "hawala-custody/0.1",
+    "supported_modes": ["independent_escrow", "federated_dar_custody"],
+    "accounts": [],
+    "status": "UNCONFIGURED_NO_ELIGIBLE_DEPOSITS",
+    "required_per_account": [
+      "adapter_id", "mode", "account_id", "dar_identity", "currency",
+      "asset_control_and_reconciliation_evidence",
+      "custody_agreement_digest", "authority_policy_digest", "authority_epoch",
+      "approval_and_ordering_profile", "withdrawal_mandate",
+      "award_execution_mandate", "migration_and_fencing_profile"
+    ]
+  },
   "collateral_profile": {
     "proposed_only": true,
     "same_currency": true,

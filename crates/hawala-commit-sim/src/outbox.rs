@@ -16,6 +16,8 @@ pub struct SyntheticDispatch {
     attempt: [u8; 32],
     peer: IdentityId,
     epoch: u64,
+    execution_scope: Option<test_execution::TestExecutionScope>,
+    terminal_policy: Option<test_execution::TestRailPolicy>,
 }
 impl SyntheticDispatch {
     pub fn transfer_id(&self) -> [u8; 32] {
@@ -29,6 +31,13 @@ impl SyntheticDispatch {
     }
     pub fn epoch(&self) -> u64 {
         self.epoch
+    }
+    /// Full coordinated TEST context; legacy dispatches have no rail scope.
+    pub fn test_execution_scope(&self) -> Option<test_execution::TestExecutionScope> {
+        self.execution_scope
+    }
+    pub fn test_terminal_policy(&self) -> Option<test_execution::TestRailPolicy> {
+        self.terminal_policy
     }
 }
 #[derive(Debug, PartialEq, Eq)]
@@ -119,6 +128,12 @@ impl Simulator {
             tx.commit()?;
             return Ok(TestDispatchDecision::Held);
         }
+        let execution_scope = super::terminal_evidence::read_scope(&tx, transfer)?;
+        let terminal_policy = if execution_scope.is_some() {
+            super::terminal_evidence::read_policy(&tx, transfer)?
+        } else {
+            None
+        };
         if tx.execute(
             "UPDATE test_outbox SET state='claimed' WHERE transfer=?1 AND state='pending'",
             params![transfer.as_slice()],
@@ -133,6 +148,8 @@ impl Simulator {
             attempt,
             peer,
             epoch: expected_epoch,
+            execution_scope,
+            terminal_policy,
         }))
     }
     /// Recovery inventory. Never returns dispatch values or retries.

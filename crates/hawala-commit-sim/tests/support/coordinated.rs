@@ -44,9 +44,9 @@ fn origin_fixture(f: &Fixture) -> (Request, SignedTestCustody) {
         },
     )
 }
-struct Lab {
-    sim: Simulator,
-    f: Fixture,
+pub(super) struct Lab {
+    pub(super) sim: Simulator,
+    pub(super) f: Fixture,
     r: Request,
     c: SignedTestCustody,
     o: Request,
@@ -54,7 +54,7 @@ struct Lab {
     digest: [u8; 32],
 }
 impl Lab {
-    fn new(path: &Path, holder: bool, cash: bool) -> Self {
+    pub(super) fn new(path: &Path, holder: bool, cash: bool) -> Self {
         let f = fixture(holder, cash, false);
         let (lot, r, c) = custody_fixture(&f);
         let (o, oc) = origin_fixture(&f);
@@ -84,11 +84,11 @@ impl Lab {
             .confirm_test_reservation([10; 32], self.digest, side, r, c, version, 140)
             .unwrap();
     }
-    fn both(&self) {
+    pub(super) fn both(&self) {
         self.confirm(TestReservationSide::Origin);
         self.confirm(TestReservationSide::Disburser);
     }
-    fn admit(&self) -> hawala_commit_sim::Result<Admission> {
+    pub(super) fn admit(&self) -> hawala_commit_sim::Result<Admission> {
         let version = self.sim.test_coordination_state([10; 32])?.version;
         self.sim.admit_coordinated(
             &self.f.envelope(),

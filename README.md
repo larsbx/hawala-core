@@ -69,6 +69,12 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
+The `hawala-controller-fence` crate adds a crash-durable, **local-only**
+controller anti-equivocation signer: one policy, account/epoch/checkpoint
+and one distinct signed custody request per checkpoint. It makes identical
+signing retries idempotent, blocks forks across restart, and cannot issue
+actual bank or cash commands. See [custody signer fencing](docs/M6_C5_CONTROLLER_FENCE.md).
+
 The `hawala-custody-model` crate simulates signed independent escrow
 or federated-controller request approvals, including conservative exact
 quorum-intersection guards for 4- and 8-controller examples. Neither
@@ -165,3 +171,8 @@ permit retry, release or settlement.
 The [test-only durable outbox](docs/M6_C4_TEST_OUTBOX.md) queues one synthetic
 dispatch with admission and marks it uncertain before claim returns. Claimed
 items cannot be retried after timeout or crash; no real executor is included.
+
+The [Lean/Quint verification layer](formal/README.md) proves abstract lifecycle
+safety and exhaustively checks a finite instance with a duplicate-claim negative
+control. Its CI gates precede further financial state-machine changes; the
+model-to-Rust correspondence and remaining refinement obligations are explicit.

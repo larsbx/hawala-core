@@ -53,6 +53,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P1 | Typed M6-C1 authority admission preflight | PR #19 open; pure model only | Signed evidence + exact quote arithmetic + journal preview + fail-closed holds |
 | P1 | Synthetic atomic ledger/QR/attempt demonstration | PR #20 open, not custody-backed | Single SQLite account hold, QR nonce, attempt ID and version in one commit; no hardware |
 | P1 | Finite escrow / federation approval simulation | PR #21 stacked on #20 | Exact authenticated controller sets and fault-intersecting quorum arithmetic; no custody finality |
+| P1 | Durable per-controller anti-equivocation signer | PR #25 implementation | Same checkpoint never signs two different custody requests; 4/8-node test, restart and partition safety |
 | P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |
@@ -140,6 +141,10 @@ provider agreements, cash-in authentication, or independent security review.
 - **M6-C2** Implemented a synthetic SQLite proof of atomic liability reserve,
   QR nonce/event tombstones, unique payout attempt and epoch/version fencing,
   with idempotent crash recovery (PR #20). This is NOT real custody or funds.
+- **M6-C5** Add a durable local signer fence for each configured escrow or
+  federated controller: one policy+epoch+account checkpoint, at most one
+  distinct custody request signature (PR #25). This is a necessary
+  anti-equivocation primitive, NOT custody, consensus or epoch migration.
 - **M6-C** Detailed [single-authority commit boundary](M6_C_AUTHORITY.md):
   join live eligibility/custody evidence, exact quote, protected credit lots,
   per-currency ledger postings and nonce/attempt in ONE serialized durable

@@ -1,0 +1,16 @@
+[package]
+name = "hawala-controller-fence"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Crash-durable local anti-equivocation signer for hypothetical Hawala custody controllers"
+
+[dependencies]
+hawala-custody-model = { path = "../hawala-custody-model" }
+hawala-identity-core = { path = "../identity-core" }
+ed25519-dalek = "2.1"
+rusqlite = { version = "0.37", features = ["bundled"] }
+fs2 = "0.4"
+
+[dev-dependencies]
+tempfile = "3"

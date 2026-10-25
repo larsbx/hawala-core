@@ -108,3 +108,12 @@ no legal clearance and no production security audit.
 **Deliver next:** mocked XFS4IoT cash events and provider simulator with
 failure/partial/retract recovery tests, followed by real provider sandbox
 and independently verified custody/reservation integration.
+
+## Air-gapped optical TEST boundary
+
+The [air-gapped optical evidence lab](ATM_OPTICAL_TEST_PROTOCOL.md)
+uses distinct signed TEST envelopes and bounded multiframe QR text, with security
+cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
+still require a live authenticated Iroh session. The lab requires prior synthetic
+M6-C7 commitment for export, permanently consumes holder responses as held
+evidence, and cannot authorize hardware, cash delivery, retry or financial release.

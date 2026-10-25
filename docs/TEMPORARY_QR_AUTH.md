@@ -85,3 +85,12 @@ The next change introduces the journal-side `begin_qr_cashout_intent` to
 consume a signed temporary QR nonce in the SAME local SQLite commit as one
 cash-out attempt. It is not a balance debit or collateral reservation.
 See [M6 atomic local intent](QR_ATOMIC_INTENT.md).
+
+## Air-gapped optical TEST boundary
+
+The [air-gapped optical evidence lab](ATM_OPTICAL_TEST_PROTOCOL.md)
+uses distinct signed TEST envelopes and bounded multiframe QR text, with security
+cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
+still require a live authenticated Iroh session. The lab requires prior synthetic
+M6-C7 commitment for export, permanently consumes holder responses as held
+evidence, and cannot authorize hardware, cash delivery, retry or financial release.

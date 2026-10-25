@@ -588,3 +588,127 @@ fn abrupt_restart_keeps_abort_or_commit_coupled_and_uncertain_execution_locked()
         }
     }
 }
+
+#[test]
+fn optical_export_requires_committed_bilateral_admission_and_claims_existing_outbox_once() {
+    use hawala_optical_test::{respond, Evidence, TerminalLab, TestPolicy};
+    for (holder, cash) in [(false, false), (false, true), (true, false), (true, true)] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("coordinated.db");
+        let l = Lab::new(&path, holder, cash);
+        let export = || {
+            l.sim
+                .export_test_optical(&l.f.envelope(), &l.o, &l.r, &key(50), 141, 170)
+        };
+        assert!(export().unwrap().is_none()); // mere preparation
+        l.both();
+        assert!(export().unwrap().is_none()); // both confirmations insufficient
+        assert!(matches!(l.admit().unwrap(), Admission::Committed(_)));
+        let before = projection(&l, &path);
+        let mut changed = l.f.envelope();
+        changed.exact_quote.quote_digest = [99; 32];
+        assert!(l
+            .sim
+            .export_test_optical(&changed, &l.o, &l.r, &key(50), 141, 170)
+            .unwrap()
+            .is_none());
+        assert!(l
+            .sim
+            .export_test_optical(&l.f.envelope(), &l.o, &l.r, &key(50), 141, 176)
+            .unwrap()
+            .is_none());
+        let commit = export().unwrap().unwrap();
+        assert!(export().unwrap().is_none());
+        assert_eq!(projection(&l, &path), before); // no new financial effects
+        assert_eq!(commit.scope.coordinated_binding, l.digest);
+        assert_eq!(commit.scope.origin, l.f.terms.terms().origin);
+        assert_eq!(commit.scope.disburser, l.f.terms.terms().disburser);
+        assert_eq!(commit.scope.amount_minor, 900);
+        assert_eq!(commit.scope.fee_minor, 100);
+        let p = TestPolicy {
+            network: l.r.network_id,
+            terminal: l.f.qr.request().verifier,
+            authority: id(50),
+            epoch: 3,
+        };
+        let terminal_path = dir.path().join("optical.db");
+        let mut terminal = TerminalLab::create(&terminal_path, p).unwrap();
+        terminal.import(&commit, 142).unwrap();
+        let holder_key = if holder { 7 } else { 2 };
+        let terminal_key = if cash { 8 } else { 4 };
+        let challenge = terminal
+            .challenge(&commit, &key(terminal_key), [80; 32], [81; 32], 143, 165)
+            .unwrap();
+        let response = respond(
+            &key(holder_key),
+            p.terminal,
+            p.authority,
+            &commit,
+            &challenge,
+            144,
+        )
+        .unwrap();
+        assert_eq!(
+            terminal.accept(&response, id(holder_key), 145).unwrap(),
+            Evidence::AuthenticatedHeld
+        );
+        drop(terminal);
+        let mut terminal = TerminalLab::open(&terminal_path, p).unwrap();
+        assert_eq!(
+            terminal.accept(&response, id(holder_key), 146).unwrap(),
+            Evidence::IdenticalReplayHeld
+        );
+        assert_eq!(projection(&l, &path), before);
+        assert_eq!(
+            l.sim.test_outbox_inventory().unwrap()[0].1,
+            hawala_commit_sim::TestOutboxState::ClaimedUncertain
+        );
+        assert_eq!(l.sim.balance([43; 32]).unwrap(), Some(900));
+    }
+}
+#[test]
+fn aborted_legacy_and_already_claimed_intents_cannot_export_optical_allocation() {
+    let d = tempfile::tempdir().unwrap();
+    let l = Lab::new(&d.path().join("abort"), false, true);
+    l.both();
+    let v = l.sim.test_coordination_state([10; 32]).unwrap().version;
+    l.sim
+        .abort_test_coordination([10; 32], l.digest, v)
+        .unwrap();
+    assert!(l
+        .sim
+        .export_test_optical(&l.f.envelope(), &l.o, &l.r, &key(50), 141, 170)
+        .unwrap()
+        .is_none());
+    let l = Lab::new(&d.path().join("claimed"), false, true);
+    l.both();
+    l.admit().unwrap();
+    l.sim
+        .claim_test_dispatch(
+            [10; 32],
+            l.f.qr.request().attempt_id,
+            l.f.qr.request().verifier,
+            3,
+            141,
+        )
+        .unwrap();
+    assert!(l
+        .sim
+        .export_test_optical(&l.f.envelope(), &l.o, &l.r, &key(50), 142, 170)
+        .unwrap()
+        .is_none());
+    let f = fixture(false, true, false);
+    let (lot, r, c) = custody_fixture(&f);
+    let (o, _) = origin_fixture(&f);
+    let sim = Simulator::open(d.path().join("legacy")).unwrap();
+    seeded(&sim, 3, 20, 1000);
+    sim.register_test_lot(&lot).unwrap();
+    assert!(matches!(
+        sim.admit(&f.envelope(), &f.policy, &c, &r, 140).unwrap(),
+        Admission::Committed(_)
+    ));
+    assert!(sim
+        .export_test_optical(&f.envelope(), &o, &r, &key(50), 141, 170)
+        .unwrap()
+        .is_none());
+}

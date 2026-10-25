@@ -6,6 +6,7 @@ members = [
   "crates/hawala-human", "crates/hawala-qr-auth", "crates/hawala-admission",
   "crates/hawala-ledger", "crates/hawala-authority", "crates/hawala-commit-sim",
   "crates/hawala-custody-model",
+  "crates/hawala-optical-test",
   "crates/hawala-controller-fence",
 ]
 resolver = "2"

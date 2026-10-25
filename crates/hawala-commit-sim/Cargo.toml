@@ -12,6 +12,7 @@ hawala-admission = { path = "../hawala-admission" }
 hawala-custody-model = { path = "../hawala-custody-model" }
 hawala-authority = { path = "../hawala-authority" }
 hawala-ledger = { path = "../hawala-ledger" }
+hawala-optical-test = { path = "../hawala-optical-test" }
 rusqlite = { version = "0.37", features = ["bundled"] }
 fs2 = "0.4"
 blake3 = "1.8"

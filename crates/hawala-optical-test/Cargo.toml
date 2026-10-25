@@ -1,0 +1,16 @@
+[package]
+name = "hawala-optical-test"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "TEST ONLY air-gapped optical evidence lab; no hardware or financial authority"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+ed25519-dalek = "2.1"
+blake3 = "1.8"
+hex = "0.4"
+rusqlite = { version = "0.37", features = ["bundled"] }
+
+[dev-dependencies]
+tempfile = "3"

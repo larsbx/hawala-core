@@ -13,7 +13,7 @@ jobs:
       - name: Kernel-check proofs with pinned toolchain
         working-directory: formal/lean
         run: |
-          if rg -n '\b(sorry|axiom)\b' Hawala.lean; then exit 1; fi
+          python3 -c 'import re; from pathlib import Path; assert not re.search(r"\b(sorry|axiom)\b", Path("Hawala.lean").read_text()), "proof placeholder or custom axiom"'
           "$HOME/.elan/bin/lake" build
   quint:
     runs-on: ubuntu-latest

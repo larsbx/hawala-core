@@ -13,7 +13,7 @@ if "$quint_bin" verify formal/quint/authority.qnt --backend=tlc --step=unsafeSte
 fi
 cat "$negative_log"
 # A missing tool, parse error or failed download is NOT a passing negative control.
-if ! rg -q '\[violation\]' "$negative_log"; then
+if ! grep -Fq '[violation]' "$negative_log"; then
   echo 'ERROR: expected a model-checker counterexample'
   exit 1
 fi

@@ -12,6 +12,8 @@ use fs2::FileExt;
 use hawala_authority::{PreviewPlan,reserve_event_id};
 use hawala_ledger::{Account,Entry,NormalSide};
 use rusqlite::{params,Connection,OptionalExtension,TransactionBehavior};
+mod admission;
+pub use admission::*;
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum AccountRole { SyntheticAsset, AvailableLiability, ReservedLiability }
@@ -179,6 +181,13 @@ impl Simulator {
     pub fn record_simulated_hold(
         &self,plan:&PreviewPlan,entry:&Entry
     )->Result<Outcome> {
+        let mut db=self.db.lock().map_err(|_|Error::StoragePoisoned)?;
+        let tx=db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let outcome=Self::record_in_transaction(&tx,plan,entry)?;
+        tx.commit()?;
+        Ok(outcome)
+    }
+    fn record_in_transaction(tx:&rusqlite::Transaction<'_>,plan:&PreviewPlan,entry:&Entry)->Result<Outcome> {
         if plan.transfer_id()==[0;32] || plan.attempt_id()==[0;32]
             || plan.nonce()==[0;32] || plan.plan_digest()==[0;32]
             || entry.event_id!=plan.ledger_event_id()
@@ -190,8 +199,6 @@ impl Simulator {
         if sorted[0].account==sorted[1].account {
             return Err(Error::InvalidEntry);
         }
-        let mut db=self.db.lock().map_err(|_|Error::StoragePoisoned)?;
-        let tx=db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let existing:Option<(Vec<u8>,Vec<u8>,Vec<u8>,Vec<u8>,i64)>=tx.query_row(
             "SELECT attempt_id,nonce,plan_digest,postings_digest,committed_version
              FROM sim_events WHERE transfer_id=?1",
@@ -295,7 +302,6 @@ impl Simulator {
                 i64_amount(p.debit_minor)?,i64_amount(p.credit_minor)?,
             ])?;
         }
-        tx.commit()?;
         Ok(Outcome::RecordedSimulation(SimulatedRecord{
             transfer_id:plan.transfer_id(),attempt_id:plan.attempt_id(),
             event_id:entry.event_id,

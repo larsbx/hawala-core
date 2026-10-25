@@ -151,3 +151,8 @@ Credits, gift cards, remittance UX
 There is **no global balance database or centralized transaction server**
 required by this architecture. Iroh transport does not provide financial
 consensus, legal compliance, or at-most-once disbursement.
+
+The test-only integrated `Simulator::admit` revalidates signed evidence within
+the reservation transaction and fences provenance/custody checkpoints.
+See [durable integrated admission](docs/M6_C_DURABLE_ADMIT.md) for its
+non-executable outcomes, adversarial tests, and remaining production gates.

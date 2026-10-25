@@ -6,6 +6,8 @@ license = "Apache-2.0"
 description = "Single SQLite transaction proof-of-concept for synthetic Hawala payout reservations; NO real funds"
 
 [dependencies]
+hawala-admission = { path = "../hawala-admission" }
+hawala-custody-model = { path = "../hawala-custody-model" }
 hawala-authority = { path = "../hawala-authority" }
 hawala-ledger = { path = "../hawala-ledger" }
 rusqlite = { version = "0.37", features = ["bundled"] }

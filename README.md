@@ -69,6 +69,12 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
+The `hawala-custody-model` crate simulates signed independent escrow
+or federated-controller request approvals, including conservative exact
+quorum-intersection guards for 4- and 8-controller examples. Neither
+signature threshold nor single custodian attestation proves asset control.
+See [M6-C3 custody profiles](docs/M6_C3_CUSTODY_MODEL.md).
+
 The `hawala-commit-sim` crate demonstrates one synthetic, crash-durable
 SQLite transaction for moving a test customer liability into a reserved
 liability while atomically tombstoning a QR nonce, transfer and attempt.

@@ -629,3 +629,6 @@ fn abrupt_exit_after_claim_never_reissues_dispatch() {
 
 #[path="support/conformance.rs"]
 mod conformance;
+
+#[path="support/observation_conformance.rs"]
+mod observation_conformance;

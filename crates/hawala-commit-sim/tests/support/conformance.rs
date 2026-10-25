@@ -2,7 +2,7 @@
 use super::*;
 use std::collections::BTreeMap;
 
-fn projection(sim:&Simulator,path:&std::path::Path,claims:u64,fenced_claims:u64)->[u64;10] {
+pub(super) fn projection(sim:&Simulator,path:&std::path::Path,claims:u64,fenced_claims:u64)->[u64;10] {
     let sql=rusqlite::Connection::open(path).unwrap();
     let committed=sim.event_count().unwrap();
     let nonce:u64=sql.query_row("SELECT count(*) FROM sim_events WHERE nonce=?1",rusqlite::params![[24u8;32].as_slice()],|r|r.get(0)).unwrap();

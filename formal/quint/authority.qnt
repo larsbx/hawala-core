@@ -4,8 +4,8 @@ module authority {
   type State = { available: int, reserved: int, committed: bool, nonce: bool,
     claimed: bool, uncertain: bool, claims: int }
   var s: State
-  pure val funding = 3
-  pure val amount = 2
+  pure val funding = 1000
+  pure val amount = 900
   action init = s' = { available: funding, reserved: 0, committed: false,
     nonce: false, claimed: false, uncertain: false, claims: 0 }
   action admit(authorized: bool): bool =

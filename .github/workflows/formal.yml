@@ -13,8 +13,12 @@ jobs:
       - name: Kernel-check proofs with pinned toolchain
         working-directory: formal/lean
         run: |
-          python3 -c 'import re; from pathlib import Path; assert not re.search(r"\b(sorry|axiom)\b", Path("Hawala.lean").read_text()), "proof placeholder or custom axiom"'
+          python3 -c 'import re; from pathlib import Path; assert not re.search(r"\b(sorry|axiom)\b", "\n".join(p.read_text() for p in Path(".").glob("*.lean"))), "proof placeholder or custom axiom"'
           "$HOME/.elan/bin/lake" build
+      - name: Regenerate Lean transition witnesses and check committed artifacts
+        run: |
+          export PATH="$HOME/.elan/bin:$PATH"
+          bash tools/check_trace_artifacts.sh
   quint:
     runs-on: ubuntu-latest
     steps:
@@ -28,4 +32,6 @@ jobs:
           java-version: '17'
       - run: npm ci --prefix formal --ignore-scripts
       - name: Exhaustive finite model and duplicate-claim negative control
-        run: bash tools/check_quint.sh
+        run: |
+          bash tools/check_quint.sh
+          bash tools/check_trace_quint.sh

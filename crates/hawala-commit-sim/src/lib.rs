@@ -18,6 +18,7 @@ mod recovery;
 pub use recovery::*;
 mod outbox;
 pub use outbox::*;
+pub mod coordination;
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum AccountRole { SyntheticAsset, AvailableLiability, ReservedLiability }

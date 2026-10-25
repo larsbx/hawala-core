@@ -178,3 +178,27 @@ is graceful reopen. Existing adversarial wire, abrupt-crash and rollback tests
 remain required. These finite conformance checks do not prove universal Rust
 refinement, actual assets, actual cash delivery, or legally effective settlement.
 There is no release, payout or dispute-resolution authority in this increment.
+
+## Bilateral reservation coordination
+
+`Coordination.lean` adds a separate preparation protocol: two synthetic custody
+reservation confirmations and one durable commit-or-final-abort decision. Its
+reachable-state proofs require both reservations for commit, forbid release of
+committed allocations, require abort for release, and make terminal decisions
+permanent. Timeout cannot release anything. Late confirmations after abort remain
+recorded until explicitly released under that abort.
+
+Lean checks closure of the 14-state graph and exports 126 event-edge paths in
+`traces/coordination.tsv` and `quint/coordinationConformance.qnt`. Quint/TLC checks
+the abstract invariants exhaustively; three unsafe mutations must fail. Rust
+replays every prefix in an isolated durable `TestCoordinator` and checks command
+replay and state-version progression. Run `tools/check_coordination.sh` alongside
+the other proof gates. This is finite projection conformance, with SQLite and
+storage assumptions still trusted; no universal Rust refinement is proved.
+
+This preparation model does not alter the original payout lifecycle's permanent
+uncertainty. Test release flags have no effect on that lifecycle, assets or ledger
+balances. See [the coordination and resolution contract](../docs/M6_C6_COORDINATION.md)
+for the required common commit order, authenticated abort fences and future
+authorized resolution requirements. The separate journal is not integrated
+financial/custody atomicity, a real custody adapter or live financial authority.

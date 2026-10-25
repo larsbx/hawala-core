@@ -269,7 +269,8 @@ impl Simulator {
             ))
         })?;
         let mut accounts = Vec::new();
-        let mut opening = Vec::new();
+        let mut opening: BTreeMap<[u8; 3], (Vec<([u8; 32], u64)>, Vec<([u8; 32], u64)>)> =
+            BTreeMap::new();
         for row in rows {
             let (id, currency, normal, balance) = row?;
             let id = fixed32(id)?;
@@ -284,30 +285,60 @@ impl Simulator {
                 currency,
                 normal,
             });
+            if balance < 0 {
+                return Err(Error::Invalid);
+            }
             if balance > 0 {
-                opening.push(Posting {
-                    account: id,
-                    debit_minor: if normal == NormalSide::Debit {
-                        balance as u64
-                    } else {
-                        0
-                    },
-                    credit_minor: if normal == NormalSide::Credit {
-                        balance as u64
-                    } else {
-                        0
-                    },
-                });
+                let sides = opening.entry(currency).or_default();
+                let side = if normal == NormalSide::Debit {
+                    &mut sides.0
+                } else {
+                    &mut sides.1
+                };
+                side.push((id, balance as u64));
             }
         }
         drop(stmt);
         let mut book = Book::new(accounts).map_err(|_| Error::Invalid)?;
-        if !opening.is_empty() {
-            book.post(Entry {
-                event_id: [255; 32],
-                postings: opening,
-            })
-            .map_err(|_| Error::Invalid)?;
+        // Pair debit/credit normal balances within each currency. Every
+        // reconstruction entry balances with just two postings, regardless
+        // of registry size. Never relax Book's public journal size limit.
+        for (currency, (mut debits, mut credits)) in opening {
+            let (mut i, mut j, mut sequence) = (0usize, 0usize, 0u64);
+            while i < debits.len() && j < credits.len() {
+                let amount = debits[i].1.min(credits[j].1);
+                let mut h = blake3::Hasher::new_derive_key("hawala/test-snapshot-entry/v1");
+                h.update(&currency);
+                h.update(&sequence.to_be_bytes());
+                book.post(Entry {
+                    event_id: *h.finalize().as_bytes(),
+                    postings: vec![
+                        Posting {
+                            account: debits[i].0,
+                            debit_minor: amount,
+                            credit_minor: 0,
+                        },
+                        Posting {
+                            account: credits[j].0,
+                            debit_minor: 0,
+                            credit_minor: amount,
+                        },
+                    ],
+                })
+                .map_err(|_| Error::Invalid)?;
+                debits[i].1 -= amount;
+                credits[j].1 -= amount;
+                if debits[i].1 == 0 {
+                    i += 1;
+                }
+                if credits[j].1 == 0 {
+                    j += 1;
+                }
+                sequence = sequence.checked_add(1).ok_or(Error::Invalid)?;
+            }
+            if i != debits.len() || j != credits.len() {
+                return Err(Error::Invalid);
+            }
         }
         let plan = match admit_preview(a, &book, now) {
             Decision::Rejected(_) => return Ok(Admission::Rejected),

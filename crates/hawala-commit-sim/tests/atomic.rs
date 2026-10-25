@@ -388,3 +388,24 @@ fn forged_custody_or_peer_selected_financial_issuer_is_rejected() {
     assert_eq!(sim.admit(&a,&f.policy,&c,&r,140).unwrap(),Admission::Rejected);
     assert_eq!(sim.event_count().unwrap(),0);
 }
+#[test]
+fn unrelated_funded_accounts_do_not_exceed_reference_journal_limit() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("large.sqlite");
+    let sim=Simulator::open(&path).unwrap();
+    let mut accounts=vec![
+        SyntheticAccount{account:Account{id:[41;32],currency:*b"EUR",normal:NormalSide::Debit},role:AccountRole::SyntheticAsset,balance_minor:1000},
+        SyntheticAccount{account:Account{id:[42;32],currency:*b"EUR",normal:NormalSide::Credit},role:AccountRole::AvailableLiability,balance_minor:1000},
+        SyntheticAccount{account:Account{id:[43;32],currency:*b"EUR",normal:NormalSide::Credit},role:AccountRole::ReservedLiability,balance_minor:0},
+    ];
+    for n in 0..130u32 {
+        let mut asset=[90;32];asset[..4].copy_from_slice(&n.to_be_bytes());
+        let mut liability=[91;32];liability[..4].copy_from_slice(&n.to_be_bytes());
+        accounts.push(SyntheticAccount{account:Account{id:asset,currency:*b"EUR",normal:NormalSide::Debit},role:AccountRole::SyntheticAsset,balance_minor:7});
+        accounts.push(SyntheticAccount{account:Account{id:liability,currency:*b"EUR",normal:NormalSide::Credit},role:AccountRole::AvailableLiability,balance_minor:7});
+    }
+    sim.seed_synthetic(&accounts,3,20).unwrap();sim.register_test_lot(&lot).unwrap();
+    assert!(matches!(sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap(),Admission::Committed(_)));
+    assert_eq!(sim.balance([42;32]).unwrap(),Some(100));
+    for a in &accounts[3..] {assert_eq!(sim.balance(a.account.id).unwrap(),Some(7));}
+}

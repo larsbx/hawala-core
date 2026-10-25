@@ -67,7 +67,7 @@ pub struct TestLot {
     pub custody_version: u64,
     pub custody_epoch: u64,
 }
-fn schema(tx: &rusqlite::Transaction<'_>) -> Result<()> {
+pub(super) fn schema(tx: &rusqlite::Transaction<'_>) -> Result<()> {
     super::recovery::schema(tx)?;
     super::outbox::schema(tx)?;
     tx.execute_batch(
@@ -85,6 +85,35 @@ fn schema(tx: &rusqlite::Transaction<'_>) -> Result<()> {
         transfer BLOB NOT NULL, binding BLOB NOT NULL, PRIMARY KEY(transfer,binding));",
     )?;
     Ok(())
+}
+pub(super) fn admission_binding(a: &AuthorityEnvelope<'_>, r: &Request) -> [u8; 32] {
+    let t = a.accepted.terms();
+    let mut h = blake3::Hasher::new_derive_key("hawala/test-admit-binding/v1");
+    h.update(&t.digest());
+    h.update(&a.qr.digest());
+    h.update(&r.digest());
+    h.update(&a.reserve_entry.event_id);
+    let mut postings = a.reserve_entry.postings.clone();
+    postings.sort_by_key(|p| p.account);
+    for p in &postings {
+        h.update(&p.account);
+        h.update(&p.debit_minor.to_be_bytes());
+        h.update(&p.credit_minor.to_be_bytes());
+    }
+    for n in [
+        a.exact_quote.rate_num,
+        a.exact_quote.rate_den,
+        a.exact_quote.source_fee_minor,
+        a.exact_quote.destination_fee_minor,
+        a.versions.authority_epoch,
+        a.versions.account_version,
+        a.versions.custody_account_version,
+        a.versions.custody_authority_epoch,
+    ] {
+        h.update(&n.to_be_bytes());
+    }
+    h.update(&a.exact_quote.quote_digest);
+    *h.finalize().as_bytes()
 }
 impl Simulator {
     /// Provisioning TEST provenance is separate from admission and never creates funds.
@@ -141,36 +170,40 @@ impl Simulator {
         r: &Request,
         now: u64,
     ) -> Result<Admission> {
+        self.admit_with_coordination(a, pinned, custody, r, now, None)
+    }
+    /// Same admission verifier and ledger, with a bilateral TEST decision in
+    /// this transaction. No real custody control or execution authority exists.
+    pub fn admit_coordinated(
+        &self,
+        a: &AuthorityEnvelope<'_>,
+        pinned: &Authorities,
+        origin: &OriginReservation<'_>,
+        custody: &dyn CustodyAuthority,
+        r: &Request,
+        now: u64,
+    ) -> Result<Admission> {
+        self.admit_with_coordination(a, pinned, custody, r, now, Some(origin))
+    }
+    fn admit_with_coordination(
+        &self,
+        a: &AuthorityEnvelope<'_>,
+        pinned: &Authorities,
+        custody: &dyn CustodyAuthority,
+        r: &Request,
+        now: u64,
+        origin: Option<&OriginReservation<'_>>,
+    ) -> Result<Admission> {
         let mut db = self.db.lock().map_err(|_| Error::StoragePoisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         schema(&tx)?;
+        if let Some(outcome) = super::coordinated::before_admission(&tx, a, origin, r, now)? {
+            return Ok(outcome);
+        }
         let t = a.accepted.terms();
-        let mut h = blake3::Hasher::new_derive_key("hawala/test-admit-binding/v1");
-        h.update(&t.digest());
-        h.update(&a.qr.digest());
-        h.update(&r.digest());
-        h.update(&a.reserve_entry.event_id);
+        let binding = admission_binding(a, r);
         let mut postings = a.reserve_entry.postings.clone();
         postings.sort_by_key(|p| p.account);
-        for p in &postings {
-            h.update(&p.account);
-            h.update(&p.debit_minor.to_be_bytes());
-            h.update(&p.credit_minor.to_be_bytes());
-        }
-        for n in [
-            a.exact_quote.rate_num,
-            a.exact_quote.rate_den,
-            a.exact_quote.source_fee_minor,
-            a.exact_quote.destination_fee_minor,
-            a.versions.authority_epoch,
-            a.versions.account_version,
-            a.versions.custody_account_version,
-            a.versions.custody_authority_epoch,
-        ] {
-            h.update(&n.to_be_bytes());
-        }
-        h.update(&a.exact_quote.quote_digest);
-        let binding = *h.finalize().as_bytes();
         let old: Option<(Vec<u8>, String)> = tx
             .query_row(
                 "SELECT binding,state FROM admission_receipts WHERE transfer=?1",
@@ -405,6 +438,9 @@ impl Simulator {
         }
         tx.execute("INSERT INTO test_outbox(transfer,attempt,queued_at,expires_at,state) VALUES(?1,?2,?3,?4,'pending')",
             params![t.transfer_id.as_slice(),result.attempt_id.as_slice(),i64_amount(now)?,i64_amount(expires)?])?;
+        if let Some(origin) = origin {
+            super::coordinated::finish_admission(&tx, a, origin)?;
+        }
         tx.commit()?;
         Ok(Admission::Committed(result))
     }

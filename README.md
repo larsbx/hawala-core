@@ -178,3 +178,9 @@ The [Lean/Quint verification layer](formal/README.md) proves abstract lifecycle
 safety and exhaustively checks a finite instance with a duplicate-claim negative
 control. Its CI gates precede further financial state-machine changes; the
 model-to-Rust correspondence and remaining refinement obligations are explicit.
+
+The [bilateral coordination and resolution contract](docs/M6_C6_COORDINATION.md)
+adds an isolated durable test journal for two synthetic reservations and one
+permanent commit-or-abort decision. Lean/Quint proofs and generated Rust traces
+check its abort fence. It is not integrated custody/financial atomicity and
+cannot release collateral or resolve an actual payout.

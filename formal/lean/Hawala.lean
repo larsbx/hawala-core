@@ -12,6 +12,8 @@ structure State where
   uncertain : Bool
   claims : Nat
   expired : Bool
+  epochCurrent : Bool
+  fencedClaims : Nat
   deriving DecidableEq, Repr
 
 inductive Event where
@@ -19,29 +21,31 @@ inductive Event where
   | claim (currentScope : Bool)
   | hold
   | expire
+  | fence
   | crash
   | replay
   | reject
   deriving DecidableEq, Repr
 
 def initial (funding : Nat) : State :=
-  ⟨funding, 0, false, false, false, false, 0, false⟩
+  ⟨funding, 0, false, false, false, false, 0, false, true, 0⟩
 
 def step (amount : Nat) (s : State) (e : Event) : State :=
   match e with
   | .admit authorized =>
-    if authorized = true ∧ s.committed = false ∧ amount ≤ s.available then
+    if s.epochCurrent = true ∧ authorized = true ∧ s.committed = false ∧ amount ≤ s.available then
       {s with available := s.available - amount, reserved := s.reserved + amount,
               committed := true, nonce := true}
     else s
   | .claim currentScope =>
-    if currentScope = true ∧ s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
+    if s.epochCurrent = true ∧ currentScope = true ∧ s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
       {s with claimed := true, uncertain := true, claims := s.claims + 1}
     else s
   | .expire =>
-    if s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
+    if s.epochCurrent = true ∧ s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
       {s with expired := true, uncertain := true}
     else s
+  | .fence => {s with epochCurrent := false}
   | .hold => if s.committed then {s with uncertain := true} else s
   | .crash | .replay | .reject => s
 
@@ -51,14 +55,15 @@ def Safe (funding : Nat) (s : State) : Prop :=
   s.claims ≤ 1 ∧
   (s.claimed = false → s.claims = 0) ∧
   (s.claimed = true → s.uncertain = true ∧ s.committed = true) ∧
-  (s.expired = true → s.uncertain = true ∧ s.committed = true ∧ s.claimed = false)
+  (s.expired = true → s.uncertain = true ∧ s.committed = true ∧ s.claimed = false) ∧
+  s.fencedClaims = 0
 
 theorem initial_safe (funding : Nat) : Safe funding (initial funding) := by
   simp [Safe, initial]
 
 theorem step_safe (funding amount : Nat) (s : State) (e : Event)
     (h : Safe funding s) : Safe funding (step amount s e) := by
-  rcases h with ⟨balance, nonce, once, zero, held, expiry⟩
+  rcases h with ⟨balance, nonce, once, zero, held, expiry, fenced⟩
   cases e <;> simp only [step]
   all_goals first
     | (split <;> simp_all [Safe] <;> omega)
@@ -104,8 +109,21 @@ theorem expiry_permanent (amount : Nat) (s : State) (e : Event)
 theorem no_claim_after_expiry {funding amount : Nat} {s : State} (scope : Bool)
     (h : Reachable funding amount s) (expired : s.expired = true) :
     step amount s (.claim scope) = s := by
-  have fence := (reachable_safe h).2.2.2.2.2 expired
+  have fence := (reachable_safe h).2.2.2.2.2.1 expired
   exact no_reclaim_after_uncertainty amount s scope fence.1
+
+theorem fence_permanent (amount : Nat) (s : State) (e : Event)
+    (h : s.epochCurrent = false) : (step amount s e).epochCurrent = false := by
+  cases e <;> simp only [step]
+  all_goals first | (split <;> simp_all) | (simp_all)
+
+theorem no_claim_under_epoch_fence (amount : Nat) (s : State) (scope : Bool)
+    (h : s.epochCurrent = false) : step amount s (.claim scope) = s := by
+  simp [step, h]
+
+theorem no_new_admission_under_epoch_fence (amount : Nat) (s : State) (authorized : Bool)
+    (h : s.epochCurrent = false) : step amount s (.admit authorized) = s := by
+  simp [step, h]
 
 #print axioms reachable_safe
 #print axioms uncertainty_permanent

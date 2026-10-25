@@ -2,26 +2,27 @@ module authority {
   // Single-lot model: authorization combines signed scope, epoch and expiry.
   // Crash/replay/rejection are stuttering, matching durable committed state.
   type State = { available: int, reserved: int, committed: bool, nonce: bool,
-    claimed: bool, uncertain: bool, claims: int, expired: bool }
+    claimed: bool, uncertain: bool, claims: int, expired: bool, epochCurrent: bool, fencedClaims: int }
   var s: State
   pure val funding = 1000
   pure val amount = 900
   action init = s' = { available: funding, reserved: 0, committed: false,
-    nonce: false, claimed: false, uncertain: false, claims: 0, expired: false }
+    nonce: false, claimed: false, uncertain: false, claims: 0, expired: false, epochCurrent: true, fencedClaims: 0 }
   action admit(authorized: bool): bool =
-    if (authorized and not(s.committed) and s.available >= amount)
+    if (s.epochCurrent and authorized and not(s.committed) and s.available >= amount)
       s' = { ...s, available: s.available - amount, reserved: s.reserved + amount,
         committed: true, nonce: true }
     else s' = s
   action claim(currentScope: bool): bool =
-    if (currentScope and s.committed and not(s.claimed) and not(s.uncertain))
+    if (s.epochCurrent and currentScope and s.committed and not(s.claimed) and not(s.uncertain))
       s' = { ...s, claimed: true, uncertain: true, claims: s.claims + 1 }
     else s' = s
-  action expire = if (s.committed and not(s.claimed) and not(s.uncertain))
+  action expire = if (s.epochCurrent and s.committed and not(s.claimed) and not(s.uncertain))
     s' = { ...s, expired: true, uncertain: true } else s' = s
+  action fence = s' = { ...s, epochCurrent: false }
   action hold = if (s.committed) s' = { ...s, uncertain: true } else s' = s
   action crashReplayReject = s' = s
-  action step = any { admit(true), admit(false), claim(true), claim(false), expire, hold, crashReplayReject }
+  action step = any { admit(true), admit(false), claim(true), claim(false), fence, expire, hold, crashReplayReject }
   val safety = and {
     s.available >= 0, s.reserved >= 0,
     s.available + s.reserved == funding,
@@ -29,7 +30,8 @@ module authority {
     s.claims <= 1,
     not(s.claimed) implies s.claims == 0,
     s.claimed implies (s.uncertain and s.committed),
-    s.expired implies (s.uncertain and s.committed and not(s.claimed))
+    s.expired implies (s.uncertain and s.committed and not(s.claimed)),
+    s.fencedClaims == 0
   }
   // Negative control: removes the no-reclaim guard after a valid claim.
   action unsafeClaim = if (s.committed)
@@ -40,4 +42,9 @@ module authority {
   action unsafeExpiryClaim = if (s.expired)
     s' = { ...s, claimed: true, claims: 1 } else s' = s
   action unsafeExpiryStep = any { admit(true), expire, unsafeExpiryClaim, crashReplayReject }
+  // Negative control: one new dispatch under a stale authority epoch.
+  action unsafeFencedClaim = if (s.committed and not(s.epochCurrent) and not(s.claimed) and not(s.uncertain))
+    s' = { ...s, claimed: true, uncertain: true, claims: s.claims + 1, fencedClaims: s.fencedClaims + 1 }
+    else s' = s
+  action unsafeFenceStep = any { admit(true), fence, unsafeFencedClaim, crashReplayReject }
 }

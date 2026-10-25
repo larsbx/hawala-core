@@ -6,7 +6,7 @@ quint_bin="${QUINT_BIN:-formal/node_modules/.bin/quint}"
 "$quint_bin" verify formal/quint/authority.qnt --backend=tlc --invariant=safety
 negative_log=$(mktemp)
 trap 'rm "$negative_log"' EXIT
-for mutation in unsafeStep unsafeExpiryStep; do
+for mutation in unsafeStep unsafeExpiryStep unsafeFenceStep; do
   if "$quint_bin" verify formal/quint/authority.qnt --backend=tlc --step="$mutation" --invariant=safety >"$negative_log" 2>&1; then
     cat "$negative_log"
     echo "ERROR: unsafe mutation $mutation was not detected"

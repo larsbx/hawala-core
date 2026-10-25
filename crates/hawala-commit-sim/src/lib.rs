@@ -19,6 +19,8 @@ pub use recovery::*;
 mod outbox;
 pub use outbox::*;
 pub mod coordination;
+mod coordinated;
+pub use coordinated::{TestReservationSide, OriginReservation};
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum AccountRole { SyntheticAsset, AvailableLiability, ReservedLiability }
@@ -42,6 +44,14 @@ impl From<std::io::Error> for Error {
     fn from(e:std::io::Error)->Self {Self::Io(e)}
 }
 pub type Result<T>=std::result::Result<T,Error>;
+
+fn validate_test_path(path: &Path) -> Result<()> {
+    if path.as_os_str().is_empty() || path == Path::new(":memory:")
+        || path.as_os_str().to_string_lossy().starts_with("file:") {
+        return Err(Error::Invalid);
+    }
+    Ok(())
+}
 
 /// A synthetic record of a local intent reservation. No operator/ATM may
 /// interpret this as an execution permit or proof of customer money.
@@ -68,14 +78,13 @@ fn fixed32(v:Vec<u8>)->Result<[u8;32]> {
 impl Simulator {
     pub fn open(path:impl AsRef<Path>)->Result<Self> {
         let path=path.as_ref();
-        if path.as_os_str().is_empty() || path==Path::new(":memory:") {
-            return Err(Error::Invalid);
-        }
+        validate_test_path(path)?;
         let mut name=path.as_os_str().to_os_string();
         name.push(".lock");
         let lock=OpenOptions::new().write(true).create(true).open(PathBuf::from(name))?;
         lock.try_lock_exclusive()?;
-        let db=Connection::open(path)?;
+        let db=Connection::open_with_flags(path, rusqlite::OpenFlags::default()
+            & !rusqlite::OpenFlags::SQLITE_OPEN_URI)?;
         db.busy_timeout(Duration::from_secs(5))?;
         db.execute_batch(
             "PRAGMA journal_mode=WAL;
@@ -111,6 +120,9 @@ impl Simulator {
                  PRIMARY KEY(event_id,idx)
              ) WITHOUT ROWID;",
         )?;
+        let mode: String = db.query_row("PRAGMA journal_mode", [], |r|r.get(0))?;
+        if mode != "wal" { return Err(Error::Invalid); }
+        coordinated::schema(&db)?;
         Ok(Self {db:Mutex::new(db),_lock:lock})
     }
 
@@ -188,6 +200,7 @@ impl Simulator {
     )->Result<Outcome> {
         let mut db=self.db.lock().map_err(|_|Error::StoragePoisoned)?;
         let tx=db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        if coordinated::enabled(&tx)? { return Err(Error::Invalid); }
         let outcome=Self::record_in_transaction(&tx,plan,entry)?;
         tx.commit()?;
         Ok(outcome)

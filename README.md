@@ -184,3 +184,9 @@ adds an isolated durable test journal for two synthetic reservations and one
 permanent commit-or-abort decision. Lean/Quint proofs and generated Rust traces
 check its abort fence. It is not integrated custody/financial atomicity and
 cannot release collateral or resolve an actual payout.
+
+The [coordinated admission test profile](docs/M6_C7_COORDINATED_ADMISSION.md)
+binds both synthetic custody claims and the existing admission commit in one
+SQLite transaction. Final abort fences delayed admission, and coordinated mode
+blocks the older journal/admission APIs from bypassing that decision. This local
+test integration still provides no real custody, payout or deployment authority.

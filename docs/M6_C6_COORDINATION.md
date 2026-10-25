@@ -7,6 +7,10 @@ This is the first roadmap dependency toward live operations, not acceptance for
 live operations. Read with [custody-interface.md](custody-interface.md) and
 [M6_C_AUTHORITY.md](M6_C_AUTHORITY.md).
 
+The later [M6-C7 coordinated admission profile](M6_C7_COORDINATED_ADMISSION.md)
+adds a separate common local decision/admission transaction. It does not import
+this standalone lab's flags or receipts as financial authority.
+
 ## 1. One decision for both reservations
 
 For each financial operation, pin the complete accepted exchange terms, both

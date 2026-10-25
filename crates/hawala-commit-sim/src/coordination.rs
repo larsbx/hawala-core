@@ -80,7 +80,43 @@ pub struct TestState {
     pub right_released: bool,
 }
 impl TestState {
-    fn bytes(self) -> Vec<u8> {
+    pub(super) fn transition(self, action: TestAction) -> Result<Self> {
+        let mut next = self;
+        match action {
+            TestAction::ConfirmLeft => next.left_locked = true,
+            TestAction::ConfirmRight => next.right_locked = true,
+            TestAction::Commit
+                if self.decision == TestDecision::Undecided
+                    && self.left_locked
+                    && self.right_locked =>
+            {
+                next.decision = TestDecision::Committed
+            }
+            TestAction::Abort if self.decision == TestDecision::Undecided => {
+                next.decision = TestDecision::Aborted
+            }
+            TestAction::ReleaseLeft
+                if self.decision == TestDecision::Aborted && self.left_locked =>
+            {
+                next.left_released = true
+            }
+            TestAction::ReleaseRight
+                if self.decision == TestDecision::Aborted && self.right_locked =>
+            {
+                next.right_released = true
+            }
+            _ => (),
+        }
+        if next != self {
+            next.version = self
+                .version
+                .checked_add(1)
+                .filter(|v| *v <= i64::MAX as u64)
+                .ok_or(Error::Invalid)?;
+        }
+        Ok(next)
+    }
+    pub(super) fn bytes(self) -> Vec<u8> {
         let mut b = self.version.to_be_bytes().to_vec();
         b.extend_from_slice(&[
             self.decision as u8,
@@ -91,7 +127,7 @@ impl TestState {
         ]);
         b
     }
-    fn decode(b: &[u8]) -> Result<Self> {
+    pub(super) fn decode(b: &[u8]) -> Result<Self> {
         if b.len() != 13 || b[9..].iter().any(|x| *x > 1) {
             return Err(Error::Invalid);
         }
@@ -270,39 +306,10 @@ impl TestCoordinator {
             } else if cmd.expected_version != state.version {
                 TestResult::Stale
             } else {
-                match cmd.action {
-                    TestAction::ConfirmLeft => next.left_locked = true,
-                    TestAction::ConfirmRight => next.right_locked = true,
-                    TestAction::Commit
-                        if state.decision == TestDecision::Undecided
-                            && state.left_locked
-                            && state.right_locked =>
-                    {
-                        next.decision = TestDecision::Committed
-                    }
-                    TestAction::Abort if state.decision == TestDecision::Undecided => {
-                        next.decision = TestDecision::Aborted
-                    }
-                    TestAction::ReleaseLeft
-                        if state.decision == TestDecision::Aborted && state.left_locked =>
-                    {
-                        next.left_released = true
-                    }
-                    TestAction::ReleaseRight
-                        if state.decision == TestDecision::Aborted && state.right_locked =>
-                    {
-                        next.right_released = true
-                    }
-                    _ => (),
-                }
+                next = state.transition(cmd.action)?;
                 if next == state {
                     TestResult::Held
                 } else {
-                    next.version = state
-                        .version
-                        .checked_add(1)
-                        .filter(|v| *v <= i64::MAX as u64)
-                        .ok_or(Error::Invalid)?;
                     TestResult::Changed
                 }
             };

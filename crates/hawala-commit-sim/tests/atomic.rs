@@ -15,9 +15,9 @@ use hawala_qr_auth::{sign_authorization, AuthorizationRequest, SignedAuthorizati
 
 fn key(n: u8) -> SigningKey { SigningKey::from_bytes(&[n;32]) }
 fn id(n: u8) -> IdentityId { IdentityId::from_signing_key(&key(n)) }
-fn accepted() -> SignedTerms {
+fn accepted_transfer(transfer:u8) -> SignedTerms {
     let t = Terms {
-        transfer_id: [10;32], sender: id(1), beneficiary: id(2),
+        transfer_id: [transfer;32], sender: id(1), beneficiary: id(2),
         origin: id(3), disburser: id(4),
         funding_minor: 1000, funding_currency: *b"USD",
         payout_minor: 900, payout_currency: *b"EUR",
@@ -72,7 +72,10 @@ fn fixture(holder_machine:bool,cash_machine:bool,reverse:bool) -> Fixture {
     fixture_attempt(holder_machine,cash_machine,reverse,22,24)
 }
 fn fixture_attempt(holder_machine:bool,cash_machine:bool,reverse:bool,attempt:u8,nonce:u8) -> Fixture {
-    let terms=accepted();
+    fixture_transfer(holder_machine,cash_machine,reverse,attempt,nonce,10)
+}
+fn fixture_transfer(holder_machine:bool,cash_machine:bool,reverse:bool,attempt:u8,nonce:u8,transfer:u8) -> Fixture {
+    let terms=accepted_transfer(transfer);
     let lh=if holder_machine {7} else {2};
     let rh=if cash_machine {8} else {4};
     let left=if holder_machine {Participant::machine(id(lh),id(2)).unwrap()}
@@ -121,6 +124,8 @@ fn fixture_attempt(holder_machine:bool,cash_machine:bool,reverse:bool,attempt:u8
             Some(assertion(4,Kind::DelegateCashPeer,1))
         } else {None},
     };
+    let mut reserve_entry=reserve();
+    reserve_entry.event_id=reserve_event_id(terms.terms().transfer_id);
     Fixture{
         terms,agreed,qr,policy,evidence,
         quote:Quote{rate_num:1,rate_den:1,source_fee_minor:0,
@@ -137,7 +142,7 @@ fn fixture_attempt(holder_machine:bool,cash_machine:bool,reverse:bool,attempt:u8
             secured_exposure:Review::ReportedClear,
             recipient_quote_acceptance:Review::ReportedClear,
         },
-        reserve:reserve(),
+        reserve:reserve_entry,
     }
 }
 
@@ -629,6 +634,8 @@ fn abrupt_exit_after_claim_never_reissues_dispatch() {
 
 #[path="support/conformance.rs"]
 mod conformance;
+#[path = "support/coordinated.rs"]
+mod coordinated;
 
 #[path="support/observation_conformance.rs"]
 mod observation_conformance;

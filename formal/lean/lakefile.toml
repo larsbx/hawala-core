@@ -1,6 +1,6 @@
 name = "hawalaFormal"
 version = "0.1.0"
-defaultTargets = ["Hawala", "Observations", "Coordination"]
+defaultTargets = ["Hawala", "Observations", "Coordination", "CoordinatedAdmission"]
 
 [[lean_lib]]
 name = "Hawala"
@@ -10,3 +10,6 @@ name = "Observations"
 
 [[lean_lib]]
 name = "Coordination"
+
+[[lean_lib]]
+name = "CoordinatedAdmission"

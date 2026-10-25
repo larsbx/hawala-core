@@ -37,3 +37,4 @@ jobs:
           bash tools/check_trace_quint.sh
           bash tools/check_observations.sh
           bash tools/check_coordination.sh
+          bash tools/check_coordinated_admission.sh

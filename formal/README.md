@@ -202,3 +202,27 @@ balances. See [the coordination and resolution contract](../docs/M6_C6_COORDINAT
 for the required common commit order, authenticated abort fences and future
 authorized resolution requirements. The separate journal is not integrated
 financial/custody atomicity, a real custody adapter or live financial authority.
+
+## Coordinated admission in one test transaction
+
+`CoordinatedAdmission.lean` composes the existing coordination and financial
+models and proves their safety predicates together, exact conservation, and
+equivalence of the committed coordination decision and financial intent. Abort
+remains permanent and blocks admission. The model's legacy event stutters.
+
+Lean checks an 18-state finite graph and exports 162 paths in
+`traces/coordinated.tsv` and `quint/coordinatedConformance.qnt`. Quint/TLC checks
+the independent model and rejects legacy financial bypass, split decision-only
+commit, and commit-after-abort mutations. Rust checks every prefix for all four
+participant modes, including both custody versions and existing ledger, nonce,
+receipt and outbox effects. Run `tools/check_coordinated_admission.sh` with the
+other formal gates. The trace restart is graceful; separate abrupt-exit and
+final-write rollback tests verify the trusted persistence assumptions separately.
+
+This finite correspondence is not universal Rust refinement. The composed model
+covers admission preparation/abort/fencing, not post-commit execution or multiple
+operations/accounts. Real assets, actual reservation finality, external authority,
+cryptography, clock checks, distributed agreement, storage honesty and backup
+anti-rollback remain outside the proof. Read the
+[test integration contract](../docs/M6_C7_COORDINATED_ADMISSION.md) for the exact
+boundary and remaining production gates. No real financial permission is added.

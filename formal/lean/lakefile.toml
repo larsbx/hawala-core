@@ -1,0 +1,6 @@
+name = "hawalaFormal"
+version = "0.1.0"
+defaultTargets = ["Hawala"]
+
+[[lean_lib]]
+name = "Hawala"

@@ -156,3 +156,8 @@ The test-only integrated `Simulator::admit` revalidates signed evidence within
 the reservation transaction and fences provenance/custody checkpoints.
 See [durable integrated admission](docs/M6_C_DURABLE_ADMIT.md) for its
 non-executable outcomes, adversarial tests, and remaining production gates.
+
+[M6-C4 signed peer recovery](docs/M6_C4_SIGNED_RECOVERY.md) adds authenticated
+Iroh observation exercises for every human/machine pairing. Signed reports
+remain held evidence through restart; they never prove cash delivery or
+permit retry, release or settlement.

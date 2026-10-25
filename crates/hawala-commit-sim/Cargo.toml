@@ -6,6 +6,8 @@ license = "Apache-2.0"
 description = "Single SQLite transaction proof-of-concept for synthetic Hawala payout reservations; NO real funds"
 
 [dependencies]
+ed25519-dalek = "2.1"
+hawala-identity-core = { path = "../identity-core" }
 hawala-admission = { path = "../hawala-admission" }
 hawala-custody-model = { path = "../hawala-custody-model" }
 hawala-authority = { path = "../hawala-authority" }
@@ -15,6 +17,9 @@ fs2 = "0.4"
 blake3 = "1.8"
 
 [dev-dependencies]
+hawala-iroh-bridge = { path = "../iroh-bridge" }
+iroh = "=1.4.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 tempfile = "3"
 ed25519-dalek = "2.1"
 hawala-admission = { path = "../hawala-admission" }

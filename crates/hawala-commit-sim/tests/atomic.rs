@@ -409,3 +409,121 @@ fn unrelated_funded_accounts_do_not_exceed_reference_journal_limit() {
     assert_eq!(sim.balance([42;32]).unwrap(),Some(100));
     for a in &accounts[3..] {assert_eq!(sim.balance(a.account.id).unwrap(),Some(7));}
 }
+
+use hawala_commit_sim::{ExecutionObservation,ObservationKind,ObservationOutcome,SignedObservation,OBSERVATION_FRAME_LEN};
+fn report(cash_key:u8,kind:ObservationKind)->SignedObservation {
+    SignedObservation::sign(&key(cash_key),ExecutionObservation{
+        transfer_id:[10;32],attempt_id:[22;32],observation_id:[80;32],
+        epoch:3,observed_at:145,expires_at:160,kind,
+    }).unwrap()
+}
+#[test]
+fn signed_observation_replay_conflict_and_restart_never_release_or_repeat() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("reports.sqlite");
+    let sim=Simulator::open(&path).unwrap();seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    let timeout=report(4,ObservationKind::Timeout);
+    assert_eq!(timeout.encode().len(),OBSERVATION_FRAME_LEN);
+    assert_eq!(SignedObservation::decode(&timeout.encode()).unwrap(),timeout);
+    assert_eq!(sim.record_observation(&timeout,id(4),150).unwrap(),ObservationOutcome::RecordedHeld);
+    let delivery=report(4,ObservationKind::ReportedDelivery);
+    assert_eq!(sim.record_observation(&delivery,id(4),150).unwrap(),ObservationOutcome::ConflictHeld);
+    drop(sim);let sim=Simulator::open(&path).unwrap();
+    assert_eq!(sim.record_observation(&timeout,id(4),1000).unwrap(),ObservationOutcome::IdenticalReplayHeld);
+    assert!(sim.is_uncertain([10;32]).unwrap());
+    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,150).unwrap(),Admission::Held);
+    assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.state_version().unwrap(),21);
+    assert_eq!(sim.balance([42;32]).unwrap(),Some(100));assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+    let audit=rusqlite::Connection::open(&path).unwrap();
+    assert_eq!(audit.query_row("SELECT count(*) FROM recovery_conflicts",[],|r|r.get::<_,u64>(0)).unwrap(),1);
+}
+#[test]
+fn forged_misbound_stale_and_uncommitted_reports_fail_closed() {
+    let f=fixture(false,true,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let sim=Simulator::open(dir.path().join("bad-report.sqlite")).unwrap();
+    seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    let good=report(8,ObservationKind::ReportedDelivery);
+    assert_eq!(sim.record_observation(&good,id(8),150).unwrap(),ObservationOutcome::Rejected);
+    sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    for peer in [id(2),id(4)] {assert_eq!(sim.record_observation(&good,peer,150).unwrap(),ObservationOutcome::Rejected);}
+    assert_eq!(sim.record_observation(&report(4,ObservationKind::Timeout),id(4),150).unwrap(),ObservationOutcome::Rejected);
+    for which in 0..5 {
+        let mut o=good.observation();
+        match which {0=>o.epoch=4,1=>o.attempt_id=[99;32],2=>o.transfer_id=[99;32],3=>o.observed_at=151,_=>o.expires_at=149}
+        let bad=SignedObservation::sign(&key(8),o).unwrap();
+        assert_eq!(sim.record_observation(&bad,id(8),150).unwrap(),ObservationOutcome::Rejected);
+    }
+    let wire=good.encode();
+    for i in [0,8,40,72,104,136,144,152,160,161,224] {
+        let mut bad=wire.clone();bad[i]^=1;assert!(SignedObservation::decode(&bad).is_err());
+    }
+    assert!(SignedObservation::decode(&wire[..wire.len()-1]).is_err());
+    let mut trailing=wire;trailing.push(0);assert!(SignedObservation::decode(&trailing).is_err());
+    assert!(!sim.is_uncertain([10;32]).unwrap());
+    assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+}
+
+#[derive(Default)]
+struct RecoveryHandshakeNonces(std::sync::Mutex<std::collections::HashSet<(IdentityId,IdentityId,[u8;32])>>);
+impl hawala_identity_core::ReplayGuard for RecoveryHandshakeNonces {
+    fn consume_once(&self,v:IdentityId,c:IdentityId,n:[u8;32])->hawala_identity_core::Result<bool> {
+        Ok(self.0.lock().unwrap().insert((v,c,n)))
+    }
+}
+#[tokio::test(flavor="multi_thread",worker_threads=2)]
+async fn signed_recovery_over_live_iroh_preserves_holds_for_all_peer_modes() {
+    use hawala_iroh_bridge::{handshake,IDENTITY_ALPN};
+    use iroh::{Endpoint,EndpointAddr,endpoint::presets};
+    for (holder_machine,cash_machine) in [(false,false),(false,true),(true,false),(true,true)] {
+        let f=fixture(holder_machine,cash_machine,false);let (lot,r,c)=custody_fixture(&f);
+        let dir=tempfile::tempdir().unwrap();let path=dir.path().join("iroh-recovery.sqlite");
+        let sim=Simulator::open(&path).unwrap();seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+        sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+        let holder=if holder_machine {7}else{2};let cash=if cash_machine {8}else{4};
+        // Explicit loopback addresses avoid discovery/relay dependencies in the harness.
+        let sender=Endpoint::builder(presets::Minimal).alpns(vec![IDENTITY_ALPN.to_vec()])
+            .bind_addr("127.0.0.1:0").unwrap().bind().await.unwrap();
+        let receiver=Endpoint::builder(presets::Minimal).alpns(vec![IDENTITY_ALPN.to_vec()])
+            .bind_addr("127.0.0.1:0").unwrap().bind().await.unwrap();
+        let target=EndpointAddr::new(receiver.id()).with_ip_addr(receiver.bound_sockets()[0]);
+        let report=report(cash,ObservationKind::Timeout);let wire=report.encode();
+        let left_guard=RecoveryHandshakeNonces::default();let right_guard=RecoveryHandshakeNonces::default();
+        tokio::time::timeout(std::time::Duration::from_secs(30),async {
+            tokio::join!(async {
+                let conn=sender.connect(target,IDENTITY_ALPN).await.unwrap();
+                handshake::initiate(&sender,&conn,&key(cash),id(holder),&left_guard).await.unwrap();
+                let mut stream=conn.open_uni().await.unwrap();stream.write_all(&wire).await.unwrap();stream.finish().unwrap();
+                stream.stopped().await.unwrap();
+            },async {
+                let conn=receiver.accept().await.unwrap().await.unwrap();
+                let verified=handshake::accept(&receiver,&conn,&key(holder),id(cash),&right_guard).await.unwrap();
+                let mut stream=conn.accept_uni().await.unwrap();
+                let bytes=stream.read_to_end(OBSERVATION_FRAME_LEN).await.unwrap();
+                let observation=SignedObservation::decode(&bytes).unwrap();
+                assert_eq!(sim.record_observation(&observation,verified.identity(),150).unwrap(),ObservationOutcome::RecordedHeld);
+            });
+        }).await.expect("signed recovery transport timed out");
+        sender.close().await;receiver.close().await;
+        drop(sim);let sim=Simulator::open(&path).unwrap();
+        assert_eq!(sim.record_observation(&report,id(cash),1000).unwrap(),ObservationOutcome::IdenticalReplayHeld);
+        assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,150).unwrap(),Admission::Held);
+        assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+    }
+}
+#[test]
+fn observation_and_uncertainty_transition_roll_back_together() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("report-fault.sqlite");
+    let sim=Simulator::open(&path).unwrap();seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    let fault=rusqlite::Connection::open(&path).unwrap();
+    fault.execute_batch("CREATE TRIGGER reject_uncertainty BEFORE UPDATE ON admission_receipts BEGIN SELECT RAISE(ABORT,'injected report failure'); END;").unwrap();
+    let signed=report(4,ObservationKind::Timeout);
+    assert!(sim.record_observation(&signed,id(4),150).is_err());
+    assert!(!sim.is_uncertain([10;32]).unwrap());
+    assert_eq!(fault.query_row("SELECT count(*) FROM recovery_observations",[],|r|r.get::<_,u64>(0)).unwrap(),0);
+    fault.execute_batch("DROP TRIGGER reject_uncertainty").unwrap();
+    assert_eq!(sim.record_observation(&signed,id(4),150).unwrap(),ObservationOutcome::RecordedHeld);
+    assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+}

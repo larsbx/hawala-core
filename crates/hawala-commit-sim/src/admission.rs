@@ -69,6 +69,7 @@ pub struct TestLot {
 }
 fn schema(tx: &rusqlite::Transaction<'_>) -> Result<()> {
     super::recovery::schema(tx)?;
+    super::outbox::schema(tx)?;
     tx.execute_batch(
         "CREATE TABLE IF NOT EXISTS admission_lots(
         id BLOB PRIMARY KEY, terms BLOB NOT NULL, available BLOB UNIQUE NOT NULL,
@@ -387,6 +388,23 @@ impl Simulator {
                 i64_amount(a.versions.authority_epoch)?
             ],
         )?;
+        let mut expires =
+            a.qr.request()
+                .expires_at
+                .min(a.agreement.intent().expires_at)
+                .min(a.assertions.eligibility.expires_at)
+                .min(a.assertions.custody_hold.expires_at);
+        for grant in [
+            &a.assertions.holder_delegation,
+            &a.assertions.cash_peer_delegation,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            expires = expires.min(grant.expires_at);
+        }
+        tx.execute("INSERT INTO test_outbox(transfer,attempt,queued_at,expires_at,state) VALUES(?1,?2,?3,?4,'pending')",
+            params![t.transfer_id.as_slice(),result.attempt_id.as_slice(),i64_amount(now)?,i64_amount(expires)?])?;
         tx.commit()?;
         Ok(Admission::Committed(result))
     }

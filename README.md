@@ -161,3 +161,7 @@ non-executable outcomes, adversarial tests, and remaining production gates.
 Iroh observation exercises for every human/machine pairing. Signed reports
 remain held evidence through restart; they never prove cash delivery or
 permit retry, release or settlement.
+
+The [test-only durable outbox](docs/M6_C4_TEST_OUTBOX.md) queues one synthetic
+dispatch with admission and marks it uncertain before claim returns. Claimed
+items cannot be retried after timeout or crash; no real executor is included.

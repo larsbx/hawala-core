@@ -534,3 +534,95 @@ fn observation_and_uncertainty_transition_roll_back_together() {
     assert_eq!(sim.record_observation(&signed,id(4),150).unwrap(),ObservationOutcome::RecordedHeld);
     assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
 }
+
+use hawala_commit_sim::{TestDispatchDecision,TestOutboxState};
+#[test]
+fn durable_outbox_claims_once_then_stays_uncertain_after_restart() {
+    let f=fixture(false,true,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("outbox.sqlite");
+    let sim=Simulator::open(&path).unwrap();
+    assert!(sim.test_outbox_inventory().unwrap().is_empty());
+    assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(8),3,150).unwrap(),TestDispatchDecision::Rejected);
+    seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    drop(sim);let sim=Simulator::open(&path).unwrap();
+    assert_eq!(sim.test_outbox_inventory().unwrap(),vec![([10;32],TestOutboxState::Pending)]);
+    let ticket=match sim.claim_test_dispatch([10;32],[22;32],id(8),3,150).unwrap() {TestDispatchDecision::Claimed(t)=>t,other=>panic!("{other:?}")};
+    assert_eq!(ticket.transfer_id(),[10;32]);assert_eq!(ticket.attempt_id(),[22;32]);assert_eq!(ticket.peer(),id(8));assert_eq!(ticket.epoch(),3);
+    assert!(sim.is_uncertain([10;32]).unwrap());
+    drop(sim);let sim=Simulator::open(&path).unwrap();
+    assert_eq!(sim.test_outbox_inventory().unwrap(),vec![([10;32],TestOutboxState::ClaimedUncertain)]);
+    assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(8),3,150).unwrap(),TestDispatchDecision::Held);
+    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,150).unwrap(),Admission::Held);
+    assert_eq!(sim.balance([43;32]).unwrap(),Some(900));assert_eq!(sim.event_count().unwrap(),1);
+}
+#[test]
+fn competing_workers_receive_only_one_synthetic_dispatch() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let sim=Simulator::open(dir.path().join("workers.sqlite")).unwrap();
+    seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    std::thread::scope(|scope| {
+        let workers:Vec<_>=(0..8).map(|_|scope.spawn(||sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap())).collect();
+        let outcomes:Vec<_>=workers.into_iter().map(|w|w.join().unwrap()).collect();
+        assert_eq!(outcomes.iter().filter(|r|matches!(r,TestDispatchDecision::Claimed(_))).count(),1);
+        assert_eq!(outcomes.iter().filter(|r|matches!(r,TestDispatchDecision::Held)).count(),7);
+    });
+    assert_eq!(sim.state_version().unwrap(),21);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+}
+#[test]
+fn outbox_scope_expiry_and_prior_reports_fail_closed() {
+    for mode in 0..4 {
+        let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+        let dir=tempfile::tempdir().unwrap();let sim=Simulator::open(dir.path().join("fenced.sqlite")).unwrap();
+        seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+        assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(9),3,150).unwrap(),TestDispatchDecision::Rejected);
+        assert_eq!(sim.claim_test_dispatch([10;32],[23;32],id(4),3,150).unwrap(),TestDispatchDecision::Rejected);
+        assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),4,150).unwrap(),TestDispatchDecision::Held);
+        assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,139).unwrap(),TestDispatchDecision::Held);
+        if mode==0 {sim.mark_uncertain([10;32]).unwrap();}
+        if mode==1 {sim.record_observation(&report(4,ObservationKind::ReportedDelivery),id(4),150).unwrap();}
+        let now=if mode>=2 {175}else{150};
+        assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,now).unwrap(),TestDispatchDecision::Held);
+        // A later clock rollback cannot re-enable an expired item.
+        assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap(),TestDispatchDecision::Held);
+        assert!(sim.is_uncertain([10;32]).unwrap());assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+    }
+}
+#[test]
+fn outbox_enqueue_and_claim_have_no_visible_partial_commits() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("outbox-fault.sqlite");
+    let sim=Simulator::open(&path).unwrap();seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    let sql=rusqlite::Connection::open(&path).unwrap();
+    sql.execute_batch("CREATE TRIGGER fail_enqueue BEFORE INSERT ON test_outbox BEGIN SELECT RAISE(ABORT,'enqueue fault'); END;").unwrap();
+    assert!(sim.admit(&f.envelope(),&f.policy,&c,&r,140).is_err());
+    assert_eq!(sim.event_count().unwrap(),0);assert_eq!(sim.balance([42;32]).unwrap(),Some(1000));
+    assert!(sim.test_outbox_inventory().unwrap().is_empty());
+    sql.execute_batch("DROP TRIGGER fail_enqueue").unwrap();sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
+    sql.execute_batch("CREATE TRIGGER fail_claim BEFORE UPDATE ON admission_receipts BEGIN SELECT RAISE(ABORT,'claim fault'); END;").unwrap();
+    assert!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).is_err());
+    assert!(!sim.is_uncertain([10;32]).unwrap());
+    assert_eq!(sim.test_outbox_inventory().unwrap(),vec![([10;32],TestOutboxState::Pending)]);
+    sql.execute_batch("DROP TRIGGER fail_claim").unwrap();
+    assert!(matches!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap(),TestDispatchDecision::Claimed(_)));
+}
+#[test]
+fn outbox_crash_child() {
+    let Some(path)=std::env::var_os("HAWALA_TEST_OUTBOX_CRASH_DB") else {return};
+    let sim=Simulator::open(path).unwrap();
+    assert!(matches!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap(),TestDispatchDecision::Claimed(_)));
+    std::process::exit(0);
+}
+#[test]
+fn abrupt_exit_after_claim_never_reissues_dispatch() {
+    let f=fixture(false,false,false);let (lot,r,c)=custody_fixture(&f);
+    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("outbox-crash.sqlite");
+    let sim=Simulator::open(&path).unwrap();seeded(&sim,3,20,1000);sim.register_test_lot(&lot).unwrap();
+    sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();drop(sim);
+    assert!(std::process::Command::new(std::env::current_exe().unwrap()).args(["--exact","outbox_crash_child"])
+        .env("HAWALA_TEST_OUTBOX_CRASH_DB",&path).status().unwrap().success());
+    let sim=Simulator::open(&path).unwrap();
+    assert_eq!(sim.test_outbox_inventory().unwrap(),vec![([10;32],TestOutboxState::ClaimedUncertain)]);
+    assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap(),TestDispatchDecision::Held);
+    assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
+}

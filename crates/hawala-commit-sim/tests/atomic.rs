@@ -254,11 +254,12 @@ fn integrated_admission_is_atomic_replayable_and_uncertainty_survives_restart() 
     assert_eq!(sim.event_count().unwrap(),0);
     let result=sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap();
     assert!(matches!(result,Admission::Committed(_)));
+    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,1000).unwrap(),result);
     sim.mark_uncertain([10;32]).unwrap();drop(sim);
     let sim=Simulator::open(&path).unwrap();
     assert!(sim.is_uncertain([10;32]).unwrap());
-    // Receipt retrieval is idempotent even after QR/custody expiry.
-    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,1000).unwrap(),result);
+    // Unknown external execution permanently holds even an identical replay.
+    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,1000).unwrap(),Admission::Held);
     assert!(sim.is_uncertain([10;32]).unwrap());
     assert_eq!(sim.balance([42;32]).unwrap(),Some(100));
     assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
@@ -354,7 +355,7 @@ fn abrupt_process_exit_recovers_the_same_intent_and_retains_hold() {
     assert!(status.success());
     let sim=Simulator::open(&path).unwrap();
     assert!(sim.is_uncertain([10;32]).unwrap());
-    assert!(matches!(sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap(),Admission::Committed(_)));
+    assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,140).unwrap(),Admission::Held);
     assert_eq!(sim.event_count().unwrap(),1);
     assert_eq!(sim.balance([42;32]).unwrap(),Some(100));
 }

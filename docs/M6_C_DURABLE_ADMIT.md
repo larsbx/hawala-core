@@ -28,7 +28,8 @@ Exact economic replays return the original permanent receipt, including
 after evidence expiry. This is retrieval, not renewed authorization.
 Different economics under a committed transfer ID are retained as conflict
 digests and rejected. Uniqueness constraints fence nonce/event/attempt reuse.
-Replay does not clear `uncertain`, advance a version, or repeat postings.
+Once execution is uncertain, even exact replay returns Held. Replay never
+clears uncertainty, advances a version, or repeats postings.
 
 `mark_uncertain` durably moves reserved → uncertain; repeated uncertainty is
 idempotent. There is no transition from uncertain to released or delivered,

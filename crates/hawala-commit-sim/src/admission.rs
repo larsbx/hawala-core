@@ -169,14 +169,14 @@ impl Simulator {
         }
         h.update(&a.exact_quote.quote_digest);
         let binding = *h.finalize().as_bytes();
-        let old: Option<Vec<u8>> = tx
+        let old: Option<(Vec<u8>, String)> = tx
             .query_row(
-                "SELECT binding FROM admission_receipts WHERE transfer=?1",
+                "SELECT binding,state FROM admission_receipts WHERE transfer=?1",
                 params![t.transfer_id.as_slice()],
-                |row| row.get(0),
+                |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()?;
-        if let Some(old) = old {
+        if let Some((old, state)) = old {
             if old != binding {
                 tx.execute(
                     "INSERT OR IGNORE INTO admission_conflicts VALUES(?1,?2)",
@@ -184,6 +184,9 @@ impl Simulator {
                 )?;
                 tx.commit()?;
                 return Ok(Admission::Rejected);
+            }
+            if state == "uncertain" {
+                return Ok(Admission::Held);
             }
             let (event, attempt, version): (Vec<u8>, Vec<u8>, i64) = tx.query_row(
                 "SELECT event_id,attempt_id,committed_version FROM sim_events WHERE transfer_id=?1",

@@ -1,0 +1,31 @@
+name: Lean and Quint safety proofs
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lean manager
+        run: curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+      - name: Kernel-check proofs with pinned toolchain
+        working-directory: formal/lean
+        run: |
+          python3 -c 'import re; from pathlib import Path; assert not re.search(r"\b(sorry|axiom)\b", Path("Hawala.lean").read_text()), "proof placeholder or custom axiom"'
+          "$HOME/.elan/bin/lake" build
+  quint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci --prefix formal --ignore-scripts
+      - name: Exhaustive finite model and duplicate-claim negative control
+        run: bash tools/check_quint.sh

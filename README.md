@@ -69,11 +69,13 @@ The journal can store nonce consumption and the one permitted *intent*
 in one SQLite transaction, but **no customer balance/custody reservation,
 real cash command or financial authorization** is implemented.
 
-The `hawala-controller-fence` crate adds a crash-durable, **local-only**
-controller anti-equivocation signer: one policy, account/epoch/checkpoint
-and one distinct signed custody request per checkpoint. It makes identical
-signing retries idempotent, blocks forks across restart, and cannot issue
-actual bank or cash commands. See [custody signer fencing](docs/M6_C5_CONTROLLER_FENCE.md).
+The `hawala-controller-fence` crate provides local, crash-durable controller
+anti-equivocation for escrow and federated approval simulations. Each
+controller can sign one distinct custody command for one pinned
+policy/account/epoch/version checkpoint; restart and concurrent signing
+cannot create a second differing signature from the same fenced key.
+This does NOT establish real assets or distributed consensus.
+See [controller fencing](docs/M6_C5_CONTROLLER_FENCE.md).
 
 The `hawala-custody-model` crate simulates signed independent escrow
 or federated-controller request approvals, including conservative exact

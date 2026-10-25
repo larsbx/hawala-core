@@ -68,6 +68,7 @@ pub struct TestLot {
     pub custody_epoch: u64,
 }
 fn schema(tx: &rusqlite::Transaction<'_>) -> Result<()> {
+    super::recovery::schema(tx)?;
     tx.execute_batch(
         "CREATE TABLE IF NOT EXISTS admission_lots(
         id BLOB PRIMARY KEY, terms BLOB NOT NULL, available BLOB UNIQUE NOT NULL,
@@ -375,6 +376,15 @@ impl Simulator {
                 r.allocation_id.as_slice(),
                 r.request_id.as_slice(),
                 r.digest().as_slice()
+            ],
+        )?;
+        tx.execute(
+            "INSERT INTO recovery_subjects(transfer,attempt,peer,epoch) VALUES(?1,?2,?3,?4)",
+            params![
+                t.transfer_id.as_slice(),
+                result.attempt_id.as_slice(),
+                a.qr.request().verifier.as_bytes().as_slice(),
+                i64_amount(a.versions.authority_epoch)?
             ],
         )?;
         tx.commit()?;

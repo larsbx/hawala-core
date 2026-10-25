@@ -14,6 +14,8 @@ use hawala_ledger::{Account,Entry,NormalSide};
 use rusqlite::{params,Connection,OptionalExtension,TransactionBehavior};
 mod admission;
 pub use admission::*;
+mod recovery;
+pub use recovery::*;
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum AccountRole { SyntheticAsset, AvailableLiability, ReservedLiability }

@@ -21,6 +21,9 @@ pub use outbox::*;
 pub mod coordination;
 mod coordinated;
 pub use coordinated::{TestReservationSide, OriginReservation};
+pub mod test_execution;
+mod terminal_evidence;
+pub use terminal_evidence::TestTerminalEvidenceDecision;
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum AccountRole { SyntheticAsset, AvailableLiability, ReservedLiability }

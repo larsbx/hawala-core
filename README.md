@@ -190,3 +190,9 @@ binds both synthetic custody claims and the existing admission commit in one
 SQLite transaction. Final abort fences delayed admission, and coordinated mode
 blocks the older journal/admission APIs from bypassing that decision. This local
 test integration still provides no real custody, payout or deployment authority.
+
+The [synthetic terminal execution authority](docs/M6_C8_TEST_TERMINAL_AUTHORITY.md)
+provides one durable mock effect or a permanent no-effect fence for a scoped
+committed attempt, with independently verifiable test signatures. Terminal
+evidence remains held, including conflicts; it cannot release balances or
+collateral or authorize a real payout.

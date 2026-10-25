@@ -636,6 +636,8 @@ fn abrupt_exit_after_claim_never_reissues_dispatch() {
 mod conformance;
 #[path = "support/coordinated.rs"]
 mod coordinated;
+#[path = "support/terminal.rs"]
+mod terminal;
 
 #[path="support/observation_conformance.rs"]
 mod observation_conformance;

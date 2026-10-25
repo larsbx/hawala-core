@@ -226,3 +226,26 @@ cryptography, clock checks, distributed agreement, storage honesty and backup
 anti-rollback remain outside the proof. Read the
 [test integration contract](../docs/M6_C7_COORDINATED_ADMISSION.md) for the exact
 boundary and remaining production gates. No real financial permission is added.
+
+## Synthetic terminal execution authority
+
+`TestExecution.lean` proves at-most-one mock effect, ticket requirements,
+permanent terminal outcomes/effect counts and no execution after a no-effect
+fence. The model assumes an already committed scope and abstracts dispatch/scope
+validation with Booleans. Its effect is only a durable counter, not physical cash.
+
+Lean checks a five-state graph and exports 35 edge paths. Quint/TLC exhausts the
+independent model and rejects duplicate-effect, late-execution-after-fence and
+missing-ticket mutations. Rust replays every prefix under all four participant
+pairings (140 fixtures), checking unchanged financial state. Separate fault tests
+cover rollback, abrupt exit, lost acknowledgments, races and signed equivocation.
+Use `tools/check_test_execution.sh` alongside the existing formal gates.
+
+Terminal evidence ingestion maps to the existing hold-only observation
+preservation specification. Full signatures and conflicting frames are retained,
+and pending dispatch claims are blocked atomically with uncertainty. No ledger
+discharge/reversal or collateral-release transition is added. This mapping and
+finite conformance are not universal Rust refinement or proof of signature
+soundness, real custody, an honest unique external authority or physical delivery.
+The [terminal authority contract](../docs/M6_C8_TEST_TERMINAL_AUTHORITY.md) states
+the persistence, epoch and authority assumptions and the remaining live gates.

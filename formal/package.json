@@ -1,0 +1,5 @@
+{
+  "name": "hawala-formal",
+  "private": true,
+  "devDependencies": { "@informalsystems/quint": "0.32.0" }
+}

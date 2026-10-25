@@ -165,3 +165,8 @@ permit retry, release or settlement.
 The [test-only durable outbox](docs/M6_C4_TEST_OUTBOX.md) queues one synthetic
 dispatch with admission and marks it uncertain before claim returns. Claimed
 items cannot be retried after timeout or crash; no real executor is included.
+
+The [Lean/Quint verification layer](formal/README.md) proves abstract lifecycle
+safety and exhaustively checks a finite instance with a duplicate-claim negative
+control. Its CI gates precede further financial state-machine changes; the
+model-to-Rust correspondence and remaining refinement obligations are explicit.

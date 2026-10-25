@@ -376,3 +376,81 @@ pub(super) fn finish_admission(
     }
     save(tx, transfer, next)
 }
+
+impl Simulator {
+    /// Export one terminal-specific signed TEST precommitment. Requires the
+    /// exact previously committed M6-C7 binding; preparation/abort/legacy plans
+    /// cannot export. Uses the existing durable outbox claim, not a second
+    /// dispatch rail. Failure/lost export after claim remains uncertain forever.
+    /// The caller's signing key is independently pinned as TEST policy by the
+    /// optical lab, never selected from a QR packet. No hardware capability.
+    pub fn export_test_optical(
+        &self,
+        a: &AuthorityEnvelope<'_>,
+        origin: &Request,
+        payout: &Request,
+        test_policy_key: &ed25519_dalek::SigningKey,
+        now: u64,
+        expires_at: u64,
+    ) -> Result<Option<hawala_optical_test::Envelope>> {
+        use hawala_optical_test::{Envelope, Scope};
+        let t = a.accepted.terms();
+        let qr = a.qr.request();
+        let digest = binding(a, origin, payout);
+        {
+            let db = self.db.lock().map_err(|_| Error::StoragePoisoned)?;
+            if !enabled(&db)? {
+                return Ok(None);
+            }
+            let (stored, epoch, state) = load(&db, t.transfer_id)?;
+            if state.decision != TestDecision::Committed
+                || stored != digest
+                || epoch != a.versions.authority_epoch
+                || !current(&db, epoch)?
+                || qr.verifier != a.expected_verifier
+                || qr.holder == qr.verifier
+                || now < qr.issued_at
+                || expires_at > qr.expires_at
+            {
+                return Ok(None);
+            }
+            let (saved, dispatch_expiry): (Vec<u8>,u64) = db.query_row(
+                "SELECT r.binding,o.expires_at FROM admission_receipts r JOIN test_outbox o ON o.transfer=r.transfer WHERE r.transfer=?1",
+                [t.transfer_id.as_slice()], |r| Ok((r.get(0)?,r.get(1)?)))?;
+            if saved != super::admission::admission_binding(a, payout)
+                || expires_at > dispatch_expiry
+            {
+                return Ok(None);
+            }
+        }
+        let scope = Scope {
+            network: payout.network_id,
+            transfer: t.transfer_id,
+            terms: t.digest(),
+            attempt: qr.attempt_id,
+            holder: qr.holder,
+            terminal: qr.verifier,
+            origin: t.origin,
+            disburser: t.disburser,
+            coordinated_binding: digest,
+            amount_minor: t.payout_minor,
+            fee_minor: qr.disclosed_fee_minor,
+            epoch: a.versions.authority_epoch,
+            currency: t.payout_currency,
+        };
+        // Construct/sign before claiming so malformed export inputs cannot
+        // consume an otherwise valid outbox. It is not exposed until commit.
+        let message = Envelope::precommit(test_policy_key, scope, now, expires_at)
+            .map_err(|_| Error::Invalid)?;
+        match self.claim_test_dispatch(
+            t.transfer_id,
+            qr.attempt_id,
+            qr.verifier,
+            a.versions.authority_epoch,
+            now,
+        )? {
+            TestDispatchDecision::Claimed(_) => Ok(Some(message)),
+            TestDispatchDecision::Held | TestDispatchDecision::Rejected => Ok(None),
+        }
+    }
+}

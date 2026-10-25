@@ -124,3 +124,12 @@ Reproduce: `lake build` in `formal/lean`; at repository root run
 `bash tools/check_trace_artifacts.sh`, `bash tools/check_coordinated_admission.sh`,
 and `cargo test -p hawala-commit-sim --test atomic coordinated::`. The full
 workspace command remains `cargo test --workspace --all-targets`.
+
+## Air-gapped optical TEST boundary
+
+The [air-gapped optical evidence lab](ATM_OPTICAL_TEST_PROTOCOL.md)
+uses distinct signed TEST envelopes and bounded multiframe QR text, with security
+cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
+still require a live authenticated Iroh session. The lab requires prior synthetic
+M6-C7 commitment for export, permanently consumes holder responses as held
+evidence, and cannot authorize hardware, cash delivery, retry or financial release.

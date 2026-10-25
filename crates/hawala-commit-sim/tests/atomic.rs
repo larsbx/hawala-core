@@ -428,9 +428,16 @@ fn signed_observation_replay_conflict_and_restart_never_release_or_repeat() {
     assert_eq!(SignedObservation::decode(&timeout.encode()).unwrap(),timeout);
     assert_eq!(sim.record_observation(&timeout,id(4),150).unwrap(),ObservationOutcome::RecordedHeld);
     let delivery=report(4,ObservationKind::ReportedDelivery);
+    let mut future=delivery.observation();future.observed_at=151;
+    let future=SignedObservation::sign(&key(4),future).unwrap();
+    assert_eq!(sim.record_observation(&future,id(4),150).unwrap(),ObservationOutcome::Rejected);
+    let mut expired=delivery.observation();expired.expires_at=149;
+    let expired=SignedObservation::sign(&key(4),expired).unwrap();
+    assert_eq!(sim.record_observation(&expired,id(4),150).unwrap(),ObservationOutcome::Rejected);
     assert_eq!(sim.record_observation(&delivery,id(4),150).unwrap(),ObservationOutcome::ConflictHeld);
     drop(sim);let sim=Simulator::open(&path).unwrap();
     assert_eq!(sim.record_observation(&timeout,id(4),1000).unwrap(),ObservationOutcome::IdenticalReplayHeld);
+    assert_eq!(sim.record_observation(&delivery,id(4),1000).unwrap(),ObservationOutcome::ConflictHeld);
     assert!(sim.is_uncertain([10;32]).unwrap());
     assert_eq!(sim.admit(&f.envelope(),&f.policy,&c,&r,150).unwrap(),Admission::Held);
     assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.state_version().unwrap(),21);

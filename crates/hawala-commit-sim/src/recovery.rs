@@ -194,6 +194,17 @@ impl Simulator {
                 |r| r.get(0),
             )
             .optional()?;
+        // Only a byte-for-byte retrieval of already accepted evidence may
+        // bypass freshness, including a previously retained conflicting frame.
+        let known_primary = prior.as_ref().is_some_and(|old| old == &frame);
+        let known_conflict: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM recovery_conflicts WHERE observation=?1 AND frame=?2)",
+            params![o.observation_id.as_slice(), frame.as_slice()],
+            |r| r.get(0),
+        )?;
+        if !known_primary && !known_conflict && (now < o.observed_at || now > o.expires_at) {
+            return Ok(ObservationOutcome::Rejected);
+        }
         let outcome = match prior {
             Some(old) if old == frame => ObservationOutcome::IdenticalReplayHeld,
             Some(_) => {
@@ -204,9 +215,6 @@ impl Simulator {
                 ObservationOutcome::ConflictHeld
             }
             None => {
-                if now < o.observed_at || now > o.expires_at {
-                    return Ok(ObservationOutcome::Rejected);
-                }
                 tx.execute(
                     "INSERT INTO recovery_observations VALUES(?1,?2,?3)",
                     params![o.observation_id.as_slice(), o.transfer_id.as_slice(), frame],

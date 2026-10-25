@@ -11,19 +11,21 @@ structure State where
   claimed : Bool
   uncertain : Bool
   claims : Nat
+  expired : Bool
   deriving DecidableEq, Repr
 
 inductive Event where
   | admit (authorized : Bool)
   | claim (currentScope : Bool)
   | hold
+  | expire
   | crash
   | replay
   | reject
   deriving DecidableEq, Repr
 
 def initial (funding : Nat) : State :=
-  ⟨funding, 0, false, false, false, false, 0⟩
+  ⟨funding, 0, false, false, false, false, 0, false⟩
 
 def step (amount : Nat) (s : State) (e : Event) : State :=
   match e with
@@ -36,6 +38,10 @@ def step (amount : Nat) (s : State) (e : Event) : State :=
     if currentScope = true ∧ s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
       {s with claimed := true, uncertain := true, claims := s.claims + 1}
     else s
+  | .expire =>
+    if s.committed = true ∧ s.claimed = false ∧ s.uncertain = false then
+      {s with expired := true, uncertain := true}
+    else s
   | .hold => if s.committed then {s with uncertain := true} else s
   | .crash | .replay | .reject => s
 
@@ -44,14 +50,15 @@ def Safe (funding : Nat) (s : State) : Prop :=
   s.nonce = s.committed ∧
   s.claims ≤ 1 ∧
   (s.claimed = false → s.claims = 0) ∧
-  (s.claimed = true → s.uncertain = true ∧ s.committed = true)
+  (s.claimed = true → s.uncertain = true ∧ s.committed = true) ∧
+  (s.expired = true → s.uncertain = true ∧ s.committed = true ∧ s.claimed = false)
 
 theorem initial_safe (funding : Nat) : Safe funding (initial funding) := by
   simp [Safe, initial]
 
 theorem step_safe (funding amount : Nat) (s : State) (e : Event)
     (h : Safe funding s) : Safe funding (step amount s e) := by
-  rcases h with ⟨balance, nonce, once, zero, held⟩
+  rcases h with ⟨balance, nonce, once, zero, held, expiry⟩
   cases e <;> simp only [step]
   all_goals first
     | (split <;> simp_all [Safe] <;> omega)
@@ -88,6 +95,17 @@ theorem uncertainty_permanent (amount : Nat) (s : State) (e : Event)
 theorem no_reclaim_after_uncertainty (amount : Nat) (s : State) (scope : Bool)
     (h : s.uncertain = true) : step amount s (.claim scope) = s := by
   simp [step, h]
+
+theorem expiry_permanent (amount : Nat) (s : State) (e : Event)
+    (h : s.expired = true) : (step amount s e).expired = true := by
+  cases e <;> simp only [step]
+  all_goals first | (split <;> simp_all) | exact h
+
+theorem no_claim_after_expiry {funding amount : Nat} {s : State} (scope : Bool)
+    (h : Reachable funding amount s) (expired : s.expired = true) :
+    step amount s (.claim scope) = s := by
+  have fence := (reachable_safe h).2.2.2.2.2 expired
+  exact no_reclaim_after_uncertainty amount s scope fence.1
 
 #print axioms reachable_safe
 #print axioms uncertainty_permanent

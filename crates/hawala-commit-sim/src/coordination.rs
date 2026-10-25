@@ -6,7 +6,7 @@
 //! common ordering authority and externally enforced abort/commit fences.
 use crate::{Error, Result};
 use hawala_identity_core::IdentityId;
-use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBehavior};
 use std::{path::Path, sync::Mutex, time::Duration};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -166,11 +166,17 @@ impl TestCoordinator {
     /// per file; reopening with changed terms, dars, allocation or epoch fails.
     pub fn open(path: impl AsRef<Path>, binding: TestBinding) -> Result<Self> {
         let path = path.as_ref();
-        if path.as_os_str().is_empty() || path == Path::new(":memory:") {
+        if path.as_os_str().is_empty()
+            || path == Path::new(":memory:")
+            || path.as_os_str().to_string_lossy().starts_with("file:")
+        {
             return Err(Error::Invalid);
         }
         let bytes = binding.bytes()?;
-        let mut db = Connection::open(path)?;
+        // URI mode can silently turn a path into an in-memory database or
+        // select an unsafe VFS. Only ordinary filesystem paths are supported.
+        let mut db =
+            Connection::open_with_flags(path, OpenFlags::default() & !OpenFlags::SQLITE_OPEN_URI)?;
         db.busy_timeout(Duration::from_secs(5))?;
         db.execute_batch(
             "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
@@ -182,6 +188,10 @@ impl TestCoordinator {
                 command BLOB NOT NULL, result INTEGER NOT NULL CHECK(result BETWEEN 1 AND 4),
                 state BLOB NOT NULL CHECK(length(state)=13)) WITHOUT ROWID;",
         )?;
+        let mode: String = db.query_row("PRAGMA journal_mode", [], |r| r.get(0))?;
+        if mode != "wal" {
+            return Err(Error::Invalid);
+        }
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let initial = TestState {
             version: 1,

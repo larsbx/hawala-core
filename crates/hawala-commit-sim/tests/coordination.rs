@@ -44,6 +44,22 @@ fn projection(s: TestState) -> [u64; 5] {
 }
 
 #[test]
+fn memory_and_uri_databases_cannot_claim_durable_coordination() {
+    for path in [
+        "",
+        ":memory:",
+        "file::memory:",
+        "file:coordination?mode=memory&cache=shared",
+        "file:coordination?vfs=unix-none",
+    ] {
+        assert!(matches!(
+            TestCoordinator::open(path, binding()),
+            Err(Error::Invalid)
+        ));
+    }
+}
+
+#[test]
 fn lean_generated_coordination_paths_match_durable_rust_every_prefix() {
     let traces: BTreeMap<String, [u64; 5]> =
         include_str!("../../../formal/traces/coordination.tsv")

@@ -102,7 +102,8 @@ set test flags after final abort. Returned receipts are local test records and
 cannot serve as custody or financial certificates.
 
 State and per-request receipts commit in one `BEGIN IMMEDIATE` transaction with
-WAL and `synchronous=FULL`. Every nonzero request ID pins its exact canonical
+verified WAL mode and `synchronous=FULL`. Only ordinary filesystem paths are
+accepted; memory databases and SQLite URI/VFS options fail closed. Every nonzero request ID pins its exact canonical
 command bytes and original result, including wrong-scope, stale and held results.
 Identical replay returns the original result marked `replayed`; callers query
 `state()` for current state. Payload changes conflict. New changes require the

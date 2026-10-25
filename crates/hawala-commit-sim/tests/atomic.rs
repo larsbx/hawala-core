@@ -626,3 +626,6 @@ fn abrupt_exit_after_claim_never_reissues_dispatch() {
     assert_eq!(sim.claim_test_dispatch([10;32],[22;32],id(4),3,150).unwrap(),TestDispatchDecision::Held);
     assert_eq!(sim.event_count().unwrap(),1);assert_eq!(sim.balance([43;32]).unwrap(),Some(900));
 }
+
+#[path="support/conformance.rs"]
+mod conformance;

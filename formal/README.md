@@ -22,8 +22,8 @@ state and arbitrary natural-number funding/reservation amounts:
 placeholders or user axioms. The printed axiom dependencies are Lean's standard
 `propext` and `Quot.sound`, not assumptions about banking or cryptography.
 
-Quint 0.32.0/TLC checks the same abstract lifecycle with funding 3 and reservation
-2, including valid/invalid scope, admission, claim, hold and crash/replay/reject
+Quint 0.32.0/TLC checks the same abstract lifecycle with funding 1000 and reservation
+900, including valid/invalid scope, admission, claim, hold and crash/replay/reject
 stuttering. TLC exhausts this finite instance (four reachable states); this is
 not random simulation or a bounded-only claim. The deliberately unsafe claim
 rule MUST produce a counterexample with two claims. The CI script distinguishes
@@ -41,7 +41,8 @@ translation tool; TLC performs the finite-state search.
 | Crash/replay stutter | durable journal and tombstones | `abrupt_exit_after_claim_never_reissues_dispatch`; `durable_outbox_claims_once_then_stays_uncertain_after_restart` |
 | Permanent uncertainty | `mark_uncertain`, `record_observation` | `signed_observation_replay_conflict_and_restart_never_release_or_repeat` |
 
-This table is a reviewed correspondence, NOT a machine-checked refinement proof.
+This table documents the obligations; the trace harness below checks a finite
+projection correspondence, NOT a universal machine-checked refinement proof.
 Lean and Quint are separately authored models; their equivalence is not proved.
 The model abstracts one currency, one lot and one permanent attempt. Concurrent
 workers are serialized into claim interleavings; a valid-scope Boolean summarizes
@@ -64,3 +65,36 @@ From the repository root, run `npm ci --prefix formal --ignore-scripts` and
 runs both proof gates on every PR and main push. Existing Rust tests remain
 mandatory. Neither model verification nor passing tests enables real money,
 payouts, collateral release or settlement.
+
+
+## Lean-generated trace conformance
+
+`lean/Export.lean` enumerates four witnessed reachable states with canonical
+paths. Kernel-evaluated checks establish the state count and closure under the
+eight-event alphabet; a theorem proves the alphabet covers all Event constructors
+and both Boolean guard values. It exports 32 transition-cover paths and their
+expected seven-field state projections directly from `Hawala.step`.
+
+CI regenerates `traces/lifecycle.tsv` and `quint/conformance.qnt` and rejects any
+drift. Quint runs the generated paths against its own transition definitions.
+The Rust test `lean_generated_transition_cover_matches_durable_rust_for_all_peer_modes`
+replays each path through the real SQLite-backed methods for all four participant
+modes and compares every prefix against the Lean-generated projection. It also
+checks unchanged synthetic assets and version advancement. Returned dispatch
+values are counted independently of the outbox row, preventing a duplicate
+return from being hidden by a single persisted row.
+
+Event adapters: admit uses the signed fixture envelope; denied changes the
+external-control report; claim uses the pinned peer/epoch; stale uses a wrong
+epoch (not expiry, whose Held transition is a different abstraction); hold calls
+mark_uncertain; crash closes/reopens the SQLite connection; replay retrieves the
+existing admission result or checks absence; reject submits an unrelated peer.
+The crash adapter is a graceful restart: existing abrupt-exit and rollback tests
+remain separate evidence for persistence assumptions. No abstract event claims
+to exercise every concrete rejection, report, timeout or failure path.
+
+This covers every outgoing edge of the finite abstract graph using one canonical
+path per source. It does not enumerate all concrete states, all histories,
+concurrent schedules, custody/grant values, or SQL failures. Equality of sampled
+projections is executable conformance evidence, not a compiler proof, universal
+refinement, or proof that Rust, Lean and Quint are semantically equivalent.

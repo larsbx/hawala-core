@@ -141,3 +141,40 @@ legally effective mandates, restoration of service, or resistance to database
 rollback/tampering. Existing claims and collateral remain reserved. Actual
 authority handoff requires its own policy, proofs and independent acceptance;
 this increment changes no runtime API or financial permission.
+
+
+## Signed-observation preservation proofs
+
+`Observations.lean` layers a report state over an arbitrary lifecycle State.
+Kernel-checked theorems establish that every modeled report preserves available
+and reserved amounts, commitment, nonce, claim flag/count, expiry and epoch fence.
+Safe lifecycle states remain Safe. Accepted reports leave uncertainty true;
+invalid reports stutter and retained conflicts cannot disappear under the modeled
+report/restart operations. These are preservation proofs, not adjudication rules.
+
+`ExportObservations.lean` covers timeout and reported-delivery frames under one
+observation ID, their exact replays, conflicting alternate payloads, invalid
+transport identity and restart. Five initial contexts are uncommitted, pending,
+claimed/uncertain, expired/held and epoch-fenced. Kernel-evaluated closure checks
+cover 21 states and export 105 transition paths. Quint independently checks these
+paths; TLC exhausts the abstract report graph. An unsafe delivery rule that clears
+the hold must yield a counterexample. CI regenerates both observation artifacts
+and requires all 105 tests, alongside the existing lifecycle gates.
+
+The SQLite-backed Rust test replays all paths for every human/machine pairing
+(420 fixture runs). It decodes the stored primary signed frame, checks retained
+conflict presence and uncertainty after each prefix, and compares every other
+lifecycle projection field against its pre-report value. A claimed, expired or
+historically epoch-fenced intent can still receive correctly scoped historical
+evidence without becoming executable. No report is accepted for an uncommitted
+intent. Invalid-identity reports leave both evidence and financial state alone.
+
+Scope: only timeout and reported delivery are traced here; reported no-delivery,
+multiple observation IDs, frame parsing, signature soundness, time-window details,
+and cross-transfer conflicts remain covered by separate implementation tests or
+future models. The verified Boolean abstracts those concrete checks; the invalid
+adapter specifically exercises the wrong authenticated peer. The restart adapter
+is graceful reopen. Existing adversarial wire, abrupt-crash and rollback tests
+remain required. These finite conformance checks do not prove universal Rust
+refinement, actual assets, actual cash delivery, or legally effective settlement.
+There is no release, payout or dispute-resolution authority in this increment.

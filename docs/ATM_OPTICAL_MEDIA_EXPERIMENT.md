@@ -150,3 +150,18 @@ allocation or actual delivery. An unchanged live relay and cloned terminal stora
 remain possible under the limitations already stated in the protocol. Physical
 execution needs its own independently authorized hardware path and permanent
 execution fence; reconciliation and financial authority remain separate obligations.
+
+## Synthetic camera-buffer adapter (next test milestone)
+
+The adapter converts borrowed raw Gray8, Rgb888 and Yuyv422 buffers into
+the original bounded grayscale raster and isolated QR decoder. Yuyv422
+requires even widths; chroma bytes are ignored. RGB uses bounded
+integer luminance arithmetic, not floating-point corrections.
+
+Dimensions 1..1024, full-row strides no more than 256 bytes above packed
+row length, exact data size and at most 4 MiB raw input are enforced
+before allocation. A malformed capture permanently poisons the assembly.
+Clean captures count against the same 32-observation and ten-second
+deadline, and the result remains held evidence only. The camera buffer
+contains neither policy nor trusted timestamp; no physical camera is wired.
+More detail: [camera-buffer test contract](ATM_CAMERA_CAPTURE_TEST.md).

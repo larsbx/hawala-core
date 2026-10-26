@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use ed25519_dalek::SigningKey;
 use hawala_identity_core::IdentityId;
-use hawala_optical_media_test::{decode_isolated, Measurement, Raster};
+use hawala_optical_media_test::{decode_isolated, CaptureFrame, Measurement, Raster};
 use hawala_optical_test::*;
 use std::path::Path;
 
@@ -83,6 +83,24 @@ impl ImageReceiver {
         }
         result
     }
+    /// Untrusted camera plane -> bounded grayscale -> isolated QR decoder.
+    /// A malformed capture permanently poisons this receiver. Even clean
+    /// pixels do not establish camera identity or financial authority.
+    pub fn receive_capture(
+        &mut self,
+        worker: &Path,
+        capture: &CaptureFrame<'_>,
+        now: u64,
+    ) -> std::result::Result<(Option<Envelope>, Measurement), String> {
+        match Raster::from_capture(capture) {
+            Ok(image) => self.receive(worker, &image, now),
+            Err(e) => {
+                self.failed = true;
+                Err(e)
+            }
+        }
+    }
+
     fn inner(
         &mut self,
         worker: &Path,

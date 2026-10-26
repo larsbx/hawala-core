@@ -1,6 +1,9 @@
 //! TEST ONLY raster transport. No Hawala identities, signing keys, journals,
 //! controller commands, Iroh credentials, file image codecs or video codecs.
 //! The worker returns untrusted text. Its parent must independently verify it.
+mod capture;
+pub use capture::{CaptureFrame, CaptureLayout, MAX_CAPTURE_BYTES, MAX_ROW_PADDING};
+
 use qrcode::{Color, EcLevel, QrCode, Version};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;

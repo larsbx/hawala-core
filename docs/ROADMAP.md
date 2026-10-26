@@ -43,6 +43,8 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | Durable replay and payout intent | PRs #7–#8 merged | No repeated attempts across crash/reconnect |
 | **P0** | **ATM identity, capability and outcome reporting** | **PR #9 merged** | Signed terminal evidence, trusted terminal/attempt binding; ambiguous or partial payouts frozen |
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
+| P0 | Air-gapped signed QR images and isolated decoder | PRs #34–#35 merged | Held evidence only; no camera sensor |
+| P0 | Synthetic camera-buffer validation | Current branch | Gray8/RGB888/YUYV422 with stride and adversarial bounds |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | **P0** | **Local atomic nonce and payout-intent journal** | PR #15 merged; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |
@@ -50,10 +52,10 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | **P0** | **Signed eligibility/custody/delegation evidence gate** | PR #16 merged | Independent issuer signatures over exact payout+QR context; no claim of asset finality |
 | P1 | Real bilateral trust, liquidity and agent eligibility | Not started | Limits, legal authority, regulated custody and hard-stop policy |
 | P1 | Exact balanced reference ledger | PR #17 merged; in-memory proof of accounting invariants only | No currency netting, replay/conflict/overdraft/overflow |
-| P1 | Typed M6-C1 authority admission preflight | PR #19 open; pure model only | Signed evidence + exact quote arithmetic + journal preview + fail-closed holds |
-| P1 | Synthetic atomic ledger/QR/attempt demonstration | PR #20 open, not custody-backed | Single SQLite account hold, QR nonce, attempt ID and version in one commit; no hardware |
-| P1 | Finite escrow / federation approval simulation | PR #21 stacked on #20 | Exact authenticated controller sets and fault-intersecting quorum arithmetic; no custody finality |
-| P1 | Per-controller durable anti-equivocation signer | PR #26 | Prevent same-controller forks at one checkpoint; simulate escrow and 4/8-node federation; no custody finality |
+| P1 | Typed M6-C1 authority admission preflight | PR #19 merged; pure model only | Signed evidence + exact quote arithmetic + journal preview + fail-closed holds |
+| P1 | Synthetic atomic ledger/QR/attempt demonstration | PR #20 merged, not custody-backed | Single SQLite account hold, QR nonce, attempt ID and version in one commit; no hardware |
+| P1 | Finite escrow / federation approval simulation | PR #21 merged | Exact authenticated controller sets and fault-intersecting quorum arithmetic; no custody finality |
+| P1 | Per-controller durable anti-equivocation signer | PR #26 merged | Prevent same-controller forks at one checkpoint; simulate escrow and 4/8-node federation; no custody finality |
 | P1 | Durable financial ledger with custody settlement | Not started | Journal balances and settlement evidence; no fake finality |
 | P0 | Human-agent cash handoff and signed receipt evidence | PR #13 merged | Same agreed obligation and replay safety as ATM; recipient and agent agree and sign, dual custody verification |
 | P2 | Merchant POS and digital gift cards | Not started | Reuses common peer protocol, financial eligibility and independent compliance gates |

@@ -42,7 +42,7 @@ impl Raster {
         if width == 0 || height == 0 || width > MAX_SIDE || height > MAX_SIDE {
             return Err("capture dimensions".into());
         }
-        if frame.layout == CaptureLayout::Yuyv422 && width % 2 != 0 {
+        if frame.layout == CaptureLayout::Yuyv422 && !width.is_multiple_of(2) {
             return Err("YUYV422 requires an even pixel width".into());
         }
         let bytes_per_pixel = match frame.layout {

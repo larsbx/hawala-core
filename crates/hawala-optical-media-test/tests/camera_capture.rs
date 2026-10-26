@@ -18,7 +18,7 @@ fn encode_capture(image: &Raster, layout: CaptureLayout, padding: usize) -> (usi
         CaptureLayout::Yuyv422 => 2,
     };
     assert!(padding <= MAX_ROW_PADDING);
-    assert!(layout != CaptureLayout::Yuyv422 || image.width() % 2 == 0);
+    assert!(layout != CaptureLayout::Yuyv422 || image.width().is_multiple_of(2));
     let stride = image.width() * channels + padding;
     let mut bytes = vec![0x6du8; stride * image.height()];
     for y in 0..image.height() {

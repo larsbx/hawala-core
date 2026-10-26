@@ -185,8 +185,10 @@ pub fn decode_isolated(
         }
         std::thread::sleep(Duration::from_millis(2));
     }
-    if !std::process::ExitStatus::from_raw(status).success() {
-        return Err("decoder rejected image".into());
+    // A child may have exited while the parent was descheduled. Reaping it is
+    // necessary, but late completion must not turn into an accepted reply.
+    if start.elapsed() >= WALL_LIMIT || !std::process::ExitStatus::from_raw(status).success() {
+        return Err("decoder rejected image/deadline".into());
     }
     output.seek(SeekFrom::Start(0)).map_err(|e| e.to_string())?;
     let mut bytes = Vec::new();

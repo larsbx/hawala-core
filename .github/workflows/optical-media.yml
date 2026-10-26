@@ -1,0 +1,25 @@
+name: TEST optical raster transport
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  optical-media:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Adversarial images and isolated decoder
+        run: cargo test --locked -p hawala-optical-media-test --all-targets
+      - name: Strict optical Clippy
+        run: cargo clippy --locked -p hawala-optical-media-test -p hawala-optical-test --all-targets -- -D warnings
+      - name: Reproduce deterministic images and source-bound measurements
+        run: python3 tools/check_optical_media.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: optical-media-${{ github.sha }}
+          path: target/optical-media/
+          if-no-files-found: error

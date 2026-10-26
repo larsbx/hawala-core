@@ -64,7 +64,20 @@ impl CameraReceiver {
         }
         result
     }
-    fn inner(&mut self, qr: &str, now: u64) -> Result<Option<Envelope>> {
+    /// A camera observation with no readable text still consumes the same budget
+    /// and checks the original deadline. It never resets or completes assembly.
+    pub fn observe_no_text(&mut self, now: u64) -> Result<()> {
+        if self.failed {
+            return Err(Error::Invalid);
+        }
+        self.observations = self.observations.saturating_add(1);
+        let result = self.check_time(now);
+        if result.is_err() {
+            self.failed = true;
+        }
+        result
+    }
+    fn check_time(&mut self, now: u64) -> Result<()> {
         if now < self.last
             || now.saturating_sub(self.started) >= ASSEMBLY_SECS
             || self.observations > 32
@@ -72,6 +85,10 @@ impl CameraReceiver {
             return Err(Error::Time);
         }
         self.last = now;
+        Ok(())
+    }
+    fn inner(&mut self, qr: &str, now: u64) -> Result<Option<Envelope>> {
+        self.check_time(now)?;
         if qr.len() > MAX_QR_CHARS {
             return Err(Error::Invalid);
         }

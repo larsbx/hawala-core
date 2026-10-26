@@ -162,7 +162,11 @@ mixed message digests, malformed headers, invalid indices/counts/lengths, upperc
 hex, trailing data, backward time, timeout or final hash/signature failure poison
 that receiver. A completed receiver emits once. Missing fragments never emit.
 New receiver objects may restart transport, but cannot restart authorization.
-Host-level camera resource quotas and video-decoder sandboxing are future work.
+A separate [TEST raster experiment](ATM_OPTICAL_MEDIA_EXPERIMENT.md) now renders
+and decodes generated QR images using a resource-bounded child. `observe_no_text`
+accounts for blank/unreadable images without renewing this deadline. Physical
+camera drivers, compressed video decoding, host-wide camera quotas and an OS
+security sandbox remain future work.
 
 ## Authentication exchange
 
@@ -260,7 +264,7 @@ check both responsible hawaladars, prohibit uncommitted/aborted/legacy/changed/
 already-claimed exports, and compare financial projections before/after the
 optical exchange. Existing terminal tests independently exercise uncertain cash.
 
-Related: [ATM contract](ATM_FIRST.md), [live temporary QR](TEMPORARY_QR_AUTH.md),
+Related: [TEST image experiment](ATM_OPTICAL_MEDIA_EXPERIMENT.md), [ATM contract](ATM_FIRST.md), [live temporary QR](TEMPORARY_QR_AUTH.md),
 [M6-C7 admission](M6_C7_COORDINATED_ADMISSION.md),
 [synthetic outbox](M6_C4_TEST_OUTBOX.md),
 [ATM observations](ATM_PROVIDER_SIMULATOR.md),

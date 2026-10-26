@@ -1,0 +1,20 @@
+[package]
+name = "hawala-optical-media-test"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "TEST ONLY isolated raster QR experiment; no controller, camera or financial authority"
+
+[dependencies]
+qrcode = { version = "=0.14.1", default-features = false }
+rqrr = { version = "=0.11.0", default-features = false }
+libc = "0.2"
+tempfile = "3"
+
+[dev-dependencies]
+hawala-optical-test = { path = "../hawala-optical-test" }
+hawala-identity-core = { path = "../identity-core" }
+ed25519-dalek = "2.1"
+blake3 = "1.8"
+hex = "0.4"
+serde_json = "1"

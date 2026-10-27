@@ -120,6 +120,9 @@ tri-state cash-out reporting. Such reports never unfreeze an uncertain payout
 or authorize a duplicate attempt. No real ATM hardware or custody is connected.
 The TEST optical-media capture adapter accepts bounded uncompressed Gray8, RGB888 and YUYV422 camera-like buffers with explicit row strides. This is not a camera driver or cash authority. See [capture validation](docs/ATM_CAMERA_CAPTURE_TEST.md) and the
 [bounded camera-acquisition packet](docs/ATM_CAMERA_IPC_TEST.md).
+A separate [test-only Linux V4L2 capture helper](docs/ATM_V4L2_TEST.md)
+can acquire one local YUYV422 frame using an operator-pinned `v4l2-ctl`.
+No cash, funds, or camera-derived authorization is supported.
 
 See [ATM-first architecture](docs/ATM_FIRST.md) and the
 [ATM provider event simulator](docs/ATM_PROVIDER_SIMULATOR.md).

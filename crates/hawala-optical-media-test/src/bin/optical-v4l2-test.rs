@@ -63,7 +63,8 @@ fn acquire(ctl:&Path,device:&str,w:usize,h:usize,limit:Duration)->Result<Vec<u8>
         .arg("--stream-count=1")
         .arg(format!("--stream-to={}",frame.display()))
         .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
-        .env_clear().env("LC_ALL","C").process_group(0)
+        .env_clear().env("LC_ALL","C").env("PATH","/usr/bin:/bin")
+        .process_group(0)
         .spawn().map_err(|_|"failed to launch capture helper")?;
     let started=Instant::now();
     let result=loop{

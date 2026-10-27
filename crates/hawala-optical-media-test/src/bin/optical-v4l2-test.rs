@@ -56,16 +56,38 @@ fn acquire(ctl:&Path,device:&str,w:usize,h:usize,limit:Duration)->Result<Vec<u8>
     if limit.is_zero() || limit>HARD_LIMIT{return Err("invalid deadline".into());}
     let dir=tempfile::tempdir().map_err(|_|"private spool failed")?;
     let frame=dir.path().join("one-frame.yuyv");
-    let mut child=Command::new(ctl)
-        .arg("--device").arg(device)
+    let mut command=Command::new(ctl);
+    command.arg("--device").arg(device)
         .arg(format!("--set-fmt-video=width={w},height={h},pixelformat=YUYV"))
         .arg("--stream-mmap=3")
         .arg("--stream-count=1")
         .arg(format!("--stream-to={}",frame.display()))
         .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
         .env_clear().env("LC_ALL","C").env("PATH","/usr/bin:/bin")
-        .process_group(0)
-        .spawn().map_err(|_|"failed to launch capture helper")?;
+        .process_group(0);
+    // Independent of any input-file length check after capture: a faulty
+    // capture tool cannot create an unbounded spool or monopolize memory,
+    // CPU, open files or core dumps within our TEST process contract.
+    // This is resource containment, not syscall/device sandboxing.
+    // SAFETY: pre_exec closure uses only async-signal-safe setrlimit calls.
+    unsafe {
+        command.pre_exec(move || {
+            for (resource,limit) in [
+                (libc::RLIMIT_FSIZE,len as u64),
+                (libc::RLIMIT_AS,256*1024*1024u64),
+                (libc::RLIMIT_CPU,3u64),
+                (libc::RLIMIT_NOFILE,64u64),
+                (libc::RLIMIT_CORE,0u64),
+            ] {
+                let budget=libc::rlimit{rlim_cur:limit,rlim_max:limit};
+                if libc::setrlimit(resource,&budget)!=0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+            }
+            Ok(())
+        });
+    }
+    let mut child=command.spawn().map_err(|_|"failed to launch capture helper")?;
     let started=Instant::now();
     let result=loop{
         match child.try_wait(){

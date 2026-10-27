@@ -118,6 +118,8 @@ The **ATM-first hardware** prototype defines signed, bounded terminal observatio
 trusted terminal/attempt binding in the durable journal, and conservative
 tri-state cash-out reporting. Such reports never unfreeze an uncertain payout
 or authorize a duplicate attempt. No real ATM hardware or custody is connected.
+The TEST optical-media capture adapter accepts bounded uncompressed Gray8, RGB888 and YUYV422 camera-like buffers with explicit row strides. This is not a camera driver or cash authority. See [capture validation](docs/ATM_CAMERA_CAPTURE_TEST.md).
+
 See [ATM-first architecture](docs/ATM_FIRST.md) and the
 [ATM provider event simulator](docs/ATM_PROVIDER_SIMULATOR.md).
 

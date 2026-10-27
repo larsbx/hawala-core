@@ -47,6 +47,7 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | Synthetic camera-buffer validation | Current branch | Gray8/RGB888/YUYV422 with stride and adversarial bounds |
 | P0 | Bounded camera-acquisition IPC packet | Current PR | Exact-length capture from untrusted local producer into prior isolated QR worker |
 | P0 | Linux V4L2 one-shot pilot capture helper | PR #38 open | Operator-pinned device and helper, exact YUYV raw frame, test IPC only |
+| P0 | Isolated camera packet → QR scanner pipeline | PR #39 stacked on #38 | One camera packet, strict framing/worker quotas, signed held-only replay end-to-end |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | **P0** | **Local atomic nonce and payout-intent journal** | PR #15 merged; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |

@@ -165,12 +165,3 @@ Clean captures count against the same 32-observation and ten-second
 deadline, and the result remains held evidence only. The camera buffer
 contains neither policy nor trusted timestamp; no physical camera is wired.
 More detail: [camera-buffer test contract](ATM_CAMERA_CAPTURE_TEST.md).
-
-## Single-frame local camera IPC rehearsal
-
-A strict 28-byte magic/format/dimension/stride/length header plus an exact
-bounded raw pixel buffer now models the missing local acquisition IPC
-boundary. It does not trust sender metadata, timestamps or camera identity.
-The payload supports the previously tested Gray8, RGB888 and YUYV422 layouts.
-Full three-stage optical exchanges exercise all formats and finish held,
-including restart and replay. See [the IPC packet contract](ATM_CAMERA_IPC_TEST.md).

@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 use ed25519_dalek::SigningKey;
 use hawala_identity_core::IdentityId;
-use hawala_optical_media_test::{
-    decode_isolated, parse_camera_packet, CaptureFrame, Measurement, Raster,
-};
+use hawala_optical_media_test::{decode_isolated, CaptureFrame, Measurement, Raster};
 use hawala_optical_test::*;
 use std::path::Path;
 
@@ -85,32 +83,6 @@ impl ImageReceiver {
         }
         result
     }
-    /// A bounded raw-camera IPC packet represents ONE received frame,
-    /// not an authenticated camera identity or financial instruction.
-    /// Rejecting an invalid packet poisons the entire optical assembly.
-    pub fn receive_packet(
-        &mut self,
-        worker: &Path,
-        packet: &[u8],
-        now: u64,
-    ) -> std::result::Result<(Option<Envelope>, Measurement), String> {
-        if self.failed || self.frames >= 32
-            || now < self.last
-            || now.saturating_sub(self.started()) >= ASSEMBLY_SECS
-            || self.start_clock.elapsed().as_secs() >= ASSEMBLY_SECS
-        {
-            self.failed = true;
-            return Err("capture IPC receiver poisoned/time/budget".into());
-        }
-        match parse_camera_packet(packet) {
-            Ok(frame) => self.receive_capture(worker, &frame, now),
-            Err(e) => {
-                self.failed = true;
-                Err(e)
-            }
-        }
-    }
-
     /// Untrusted camera plane -> bounded grayscale -> isolated QR decoder.
     /// A malformed capture permanently poisons this receiver. Even clean
     /// pixels do not establish camera identity or financial authority.

@@ -2,7 +2,11 @@
 //! controller commands, Iroh credentials, file image codecs or video codecs.
 //! The worker returns untrusted text. Its parent must independently verify it.
 mod capture;
+mod capture_packet;
 pub use capture::{CaptureFrame, CaptureLayout, MAX_CAPTURE_BYTES, MAX_ROW_PADDING};
+pub use capture_packet::{
+    encode_camera_packet, parse_camera_packet, HEADER_LEN, MAX_PACKET_BYTES,
+};
 
 use qrcode::{Color, EcLevel, QrCode, Version};
 use std::io::{Read, Seek, SeekFrom, Write};

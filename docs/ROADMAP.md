@@ -45,8 +45,8 @@ status, eligibility, bilateral limits, liquidity and funding permissions.
 | P0 | ATM normalized event simulator and provider contract | PR #10 merged | Full/partial/retract/jam/no-sensor scenarios; immutable signed report |
 | P0 | Air-gapped signed QR images and isolated decoder | PRs #34–#35 merged | Held evidence only; no camera sensor |
 | P0 | Synthetic camera-buffer validation | Current branch | Gray8/RGB888/YUYV422 with stride and adversarial bounds |
-| P0 | Bounded camera-acquisition IPC packet | PR #37 merged | Exact-length capture from untrusted local producer into prior isolated QR worker |
-| P0 | Linux V4L2 single-shot pilot capture helper | PR #38 | Locally pinned camera/tool, one bounded YUYV422 frame; no hardware acceptance claim |
+| P0 | Bounded camera-acquisition IPC packet | Current PR | Exact-length capture from untrusted local producer into prior isolated QR worker |
+| P0 | Linux V4L2 one-shot pilot capture helper | PR #38 open | Operator-pinned device and helper, exact YUYV raw frame, test IPC only |
 | P0 | ATM operator integration (XFS4IoT or contracted network API) | Not started | Authorized device and operator, cash-out mock and vendor sandbox proof |
 | P0 | ATM terminal deposit/recycling | Not started | Deposit escrow pending authenticated note acceptance and settlement, recycler inventory reconciliation |
 | **P0** | **Local atomic nonce and payout-intent journal** | PR #15 merged; no financial reservation | QR replay consumption and payout attempt committed together in SQLite |

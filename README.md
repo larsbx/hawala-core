@@ -211,3 +211,7 @@ cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
 still require a live authenticated Iroh session. The lab requires prior synthetic
 M6-C7 commitment for export, permanently consumes holder responses as held
 evidence, and cannot authorize hardware, cash delivery, retry or financial release.
+
+The [test-only scanner pipeline](docs/ATM_CAMERA_SCAN_PIPELINE.md)
+connects one bounded camera IPC packet to the existing resource-isolated
+QR worker; signed transaction evidence remains held, never executable.

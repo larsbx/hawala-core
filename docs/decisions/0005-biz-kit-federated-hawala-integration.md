@@ -215,8 +215,10 @@ M6-C6 and M6-C7 alone model only one local journal. The new
 `CrossAuthority.lean` / `crossAuthority.qnt` increment models independent
 participants and blocking recovery. Persistent Rust/Elixir TEST adapters now
 replay the selected formal corpus through separate local journals. Actual
-financial-writer, signed-wire and custody-boundary refinement remains open;
-no synthetic checkout orchestration is supplied.
+financial-writer and custody-boundary refinement remains open. A restricted
+signed TEST RPC/outbox profile now checks lost replies and query-only recovery;
+its `test_reserved` state never permits payment, fulfillment or escrow release.
+Actual cross-instance financial checkout orchestration remains gated by G1–G8.
 *Closes when:* a Quint/Lean model of the cross-authority commit is merged.
 It covers coordinator and participant messages, crashes and restarts,
 timeouts, partitions, duplicate and replayed messages, and abort fencing.
@@ -253,9 +255,11 @@ participant signature itself and never accepts the host's assertion of
 consent.
 
 *Status:* host-signed, pinned, versioned, grant- and body-bound admission
-and service-signed responses were merged in hawala-core #43. The socket
-transport, durable replay storage and the mapping from biz-kit grants to
-`GrantPolicy` remain open.
+and service-signed responses were merged in hawala-core #43. The restricted
+TEST endpoint increment adds exact mutually signed local RPC, pinned TEST grants,
+durable replay storage and a query-only business outbox. It carries no participant
+consent or financial evidence. Actual capability negotiation, participant-signature
+verification and mapping biz-kit grants to production `GrantPolicy` remain open.
 
 **G7. Disclosure model (N6). Blocks step 2.** N6 binds "permitted
 disclosure" into the correlation record, but no model defines it.

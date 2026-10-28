@@ -68,9 +68,9 @@ copy hashes and unchanged identical N1–N7/G1–G11 text. Editing either copy o
 following unpinned `main` is rejected.
 
 Rust's default build excludes the test API; CI explicitly enables its
-`conformance` feature for these tests. Elixir compiles both adapter modules only
+`conformance` feature for these tests. Elixir compiles all four TEST adapter/endpoint modules only
 from `test/support` in `MIX_ENV=test`; CI also checks that a production build
-contains neither module. No live endpoint or business workflow calls either
+contains none of these modules. No production endpoint or domain business workflow calls either
 adapter. Production authority/custody semantics remain solely Hawala-owned.
 
 ## Reproduce and remaining obligations
@@ -85,8 +85,9 @@ python3 tools/check_hawala_architecture_pin.py --source ../hawala-core
 ```
 
 This closes only the **selected persistent TEST-adapter conformance subtask**.
-It does not close G3 or D5.5 for an actual financial writer. Outstanding gates
-include mutually authenticated ports/Iroh delivery, durable real attempt/QR
+It does not close G3 or D5.5 for an actual financial writer. The next [restricted TEST endpoint/outbox increment](TEST_ENDPOINT_ORCHESTRATION.md)
+adds signed local RPC; its receipts confer no financial authority. Outstanding
+gates include actual financial capability ports/Iroh delivery, durable real attempt/QR
 consumption, exact signed-envelope and mandate verification, financial prepare
 admissibility under changing policy, actual authority/custody boundary fencing,
 accounting and real finality verification. Independent formal/security review

@@ -1,5 +1,5 @@
-//! TEST-ONLY host adapter for the canonical finite protocol. No wire signatures,
-//! assets, financial append, execution, custody, ports or production entry point.
+//! TEST-ONLY host adapter for the canonical finite protocol and signed local lab RPC.
+//! No assets, financial append, financial evidence, custody or production entry point.
 //! Three independent SQLite journals; no cross-authority database transaction.
 #![cfg(feature = "conformance")]
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBehavior};
@@ -568,3 +568,6 @@ pub fn test_workflow_gate(verified: bool, stage: &str, action: &str) -> Result<b
             || stage == "settled"
             || (action == "reserveCancelableOrder" && matches!(stage, "committed" | "executed"))))
 }
+
+#[cfg(unix)]
+pub mod endpoints;

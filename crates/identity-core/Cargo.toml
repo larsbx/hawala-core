@@ -8,3 +8,6 @@ description = "QR-presented P2P identity, credentials and evidence-based reputat
 [dependencies]
 ed25519-dalek = "2.1"
 hex = "0.4"
+
+[dev-dependencies]
+serde_json = "1"

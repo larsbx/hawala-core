@@ -13,5 +13,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --workspace --all-targets
 
+      - name: TigerBeetle-first port core has no compiler warnings
+        run: cargo clippy -p hawala-tigerbeetle-flow --all-targets --locked -- -D warnings
+
+      - name: TigerBeetle-first unsafe mutations produce intended assertion failures
+        run: python3 tools/check_tb_first_mutations.py
+
       - name: Durable TEST host cross-authority conformance
         run: cargo test -p hawala-cross-authority-test --features conformance

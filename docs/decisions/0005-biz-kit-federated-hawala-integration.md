@@ -2,7 +2,7 @@
 
 Status: **Proposed**, 2026-10-28. Paired with biz-kit's
 [network-native Hawala profile](https://github.com/larsbx/biz-kit/blob/main/docs/architecture/2026-10-28-federated-hawala-native-capability.md).
-Changes to N1–N7 require corresponding review in both repositories.
+N1–N7 are mirrored verbatim; changes require the same reviewed change in both repositories.
 This extends [ADR 0004](0004-biz-kit-shared-identity-scoped-authority.md),
 [M6-C](../M6_C_AUTHORITY.md), [M6-C6](../M6_C6_COORDINATION.md), and
 [M6-C7](../M6_C7_COORDINATED_ADMISSION.md). It **does not** turn any test-only
@@ -22,90 +22,109 @@ authority, shared custody, shared balances, or common database ownership**.
 
 ## Proposed decisions
 
+<!-- HAWALA_NORMATIVE_BEGIN -->
 **N1. One Hawala capability plane per participating biz-kit instance.**
 A biz-kit installation may host one locally administered Hawala-capability
-plane: signed identity and reputation evidence, authenticated Iroh peer
-transport, quote/terms and payment-intent APIs, financial-authority routing,
-operation recovery and user-facing status projections. A deployment may run a
-supervised Rust service/sidecar with versioned authenticated local ports; pure
-Rust functions may be linked separately. A JVM/BEAM process, web controller,
-ActivityPub adapter or transport connection never receives financial authority
-merely by calling this service. No universal Hawala operator, required central
-server or singleton identity registry is introduced.
+plane: signed identity/reputation evidence, authenticated Iroh peer transport,
+quote/terms and payment proposals, authority routing, recovery and status
+projections, through versioned authenticated local ports. A supervised Rust
+service/sidecar is preferred; pure Rust validators may be linked separately.
+Calling this service never confers financial authority on a host, controller,
+JVM/BEAM process or ActivityPub adapter. The host never holds participant
+identity, consent or transaction-QR keys, and never signs for participants.
+It may hold only its own node/operator keys in distinct signing roles. No
+universal Hawala operator, required central server or singleton identity
+registry is introduced.
 
-**N2. Node roles are separate from custody/authority roles.**
-Each instance may independently be a marketplace home, customer/merchant peer,
-routing/observer peer, hawaladar operator, payout terminal operator, or
-**explicitly named financial authority for a scoped portfolio**. The first
-four roles confer no custody or financial admission powers. Operator or
-authority roles require independent legal mandate, local authorization,
-jurisdiction-specific eligibility and enforced scope. Declaring a role or
-advertising a route never creates financial authority.
+**N2. Business, custody, financial authority and coordination are separate roles.**
+An installation may be a business home, participant/merchant peer, routing or
+observer peer, hawaladar operator, terminal operator, or one explicitly named
+financial authority for a scoped portfolio. None of the business, discovery,
+identity or routing roles grants custody or financial admission powers. A
+separate **scoped decision coordinator** may order commit/abort only for the
+manifest and authority scopes jointly accepting its mandate, key, durable
+order and epoch/succession policy. It cannot spend either authority's assets,
+attest delivery/finality, sign participant consent or order other scopes.
+The recovery resolver, fence operator, execution observer and settlement
+attestor require their own explicit mandates. Operator roles retain independent
+legal eligibility, local authorization and enforced scope.
 
-**N3. Hawala keeps the canonical protocol and financial rules.**
-`hawala-core` remains the authoritative implementation/specification owner for
-QR-only identity presentation, authenticated Iroh session binding,
-dual-signed terms, transaction QR, obligation provenance, trust/exposure,
-double-entry postings, custody receipts, FX, clearing, payout lifecycle,
-dispute resolution and `admit(operation, authority_envelope)` semantics.
-biz-kit provides versioned host adapters, policy/grant translation, workflow
-presentation, custody/authority deployment and signed business evidence.
-Do not reimplement a competing Hawala ledger or protocol in
-`commerce_core`, `federation_core`, `group_buy_core` or
-`coop_substrate`; keep independently runnable Hawala peers possible.
+**N3. Hawala owns canonical financial semantics.**
+`hawala-core` remains the sole protocol/specification owner for QR-only identity
+presentation, authenticated Iroh binding, dual-signed terms and transaction QR,
+obligation provenance, trust/exposure, exact accounting, custody, FX, clearing,
+payout/dispute lifecycle and `admit(operation, authority_envelope)`. It also
+owns the [cross-authority evidence and blocking-commit profile](https://github.com/larsbx/hawala-core/blob/main/docs/CROSS_AUTHORITY_V1.md)
+and its formal artifacts. Biz-kit owns versioned host adapters, business
+grants, domain workflows/UI and source-attributed business evidence. Do not
+fork a Hawala financial ledger/protocol into `commerce_core`, `group_buy_core`,
+`federation_core`, `coop_substrate` or generic `CapitalAccounts`. Independent
+non-biz-kit Hawala peers remain possible. These normative N1–N7 decisions are
+mirrored verbatim; a change requires the same reviewed change in both records.
 
-**N4. Scoping is financial, not network-wide.**
-A participating node's biz-kit business ledger owns its local business facts.
-Only if ADR 0004 D5's **all six** conditions hold may that same instance's
-serialized financial append boundary be the **single named Hawala financial
-authority** for an explicit scope S of obligations, credit lots and collateral.
-The scope, custody adapter, epochs, acceptance policy, successor/fencing policy
-and precise accountable operator must be documented and verified. Other
-instances may hold read-only, independently verified receipts/projections for S
-but have no write authority. If D5 is not met, use an independently authorized
-Hawala financial authority and treat biz-kit local records as nonauthoritative
-evidence. There is no distributed shared biz-kit ledger for all Hawala balances.
+**N4. Exactly one named financial authority per declared scope.**
+Each biz-kit business ledger owns its local business facts. Only when all six
+ADR 0004 D5 conditions hold may an instance's serialized financial append
+boundary be the single named Hawala financial authority for explicit scope S
+of obligations, credit lots, claims, collateral and dar exposure. Pin scope,
+operator, custody profile, acceptance/grant policy, keys, epochs, successor and
+effective fencing. Other installations retain independently verified read-only
+receipts/projections, never co-write S's balances. Without D5, use an independently
+authorized Hawala authority. There is no network-wide shared biz-kit balance
+ledger and no general financial event-store bridge.
 
-**N5. Inter-instance settlement uses Hawala's dedicated private protocol.**
-Iroh carries signed end-to-end financial peer messages; ActivityPub can carry
-public listings/discovery signals but not signed financial authorization,
-private KYC, transaction QR, custody instructions or payment finality.
-Across distinct authorities use M6-C6's common final-decision/abort-fence
-contract and its accountable common order, not two independent successful
-commits, optimistic cross-ledger writes, gossip quorum or an ActivityPub
-`Accept`. M6-C7 is currently only a **single-local-transaction synthetic
-reference**, not an implemented distributed coordination protocol. On
-unavailable/stale/mismatched authority, grant, custody or decision state,
-return `HOLD`; retain locks and original IDs until independently authorized
-reconciliation.
+**N5. Private Hawala coordination; HOLD on unresolved decisions.**
+Iroh carries authenticated, signed end-to-end financial messages. ActivityPub
+is limited to public listings/discovery, never financial authorization, private
+KYC, transaction QR, custody instructions or payment finality. Cross-authority
+commit uses one jointly mandated scoped coordinator's irreversible decision
+order, signed prepares and participant ACKs under the canonical profile;
+neither authority infers that its peer committed. Unilateral refusal is safe
+only before durable prepare. After prepare, coordinator failure, partition,
+stale/mismatched mandates or unresolved financial state require `HOLD`, retaining
+locks, original IDs and evidence. Recovery requires an effective predecessor
+boundary fence, both authority fences, complete authenticated decision history,
+separate successor-installation ACKs and the named recovery mandate. No timer
+unlocks reservations. Terminal commit/abort cannot change. M6-C6/C7 remain
+local synthetic references; formal models do not implement distributed settlement.
 
-**N6. Native composition with commerce, fulfillment and group buying.**
-A marketplace purchase, restaurant checkout, dispatch fee, group-buy pledge
-or remittance starts as an **authorized business/payment proposal**, not a
-Hawala posting. Bind business ID/revision, parties, exact amount/currency,
-accepted FX/fees, expiry, obligation digest, funding lot, authority IDs,
-attempt ID and permitted disclosure into an immutable correlation record.
-The financial authority independently performs `admit`, with
-commit-before-execute. A durable, idempotent signed receipt/status projection
-may advance a business workflow only when it proves the **required financial
-state** under pinned trust/policy; `Committed(intent)` is not payout delivery or
-final settlement. Reconciliation handles partial success, timeout, replay,
-dispute and compensation. Do not declare cross-instance ACID atomicity.
+**N6. Evidence-typed composition with explicit workflow gates.**
+Checkout, dispatch fees, group-buy pledges, remittance, payout and ATM UIs start
+as authorized proposals, never financial postings. Bind immutable business
+ID/revision, network/attempt, parties, exact terms/amounts/fees, expiry, funding,
+obligations, authorities/epochs, destination and permitted disclosure.
+The canonical profile specifies exact domain-separated bytes and independently
+pinned signers for `Proposed`, `Committed(intent)`, `Executed(observed)` and
+`Settled`. Complete committed intent evidence requires both authority ACKs;
+coordinator decision, execution observation and settlement evidence are distinct.
+Cancelable order reservation may wait for committed intent; goods release,
+paid dispatch, group-buy release and remittance-delivered status require
+independently verified settled evidence plus local business conditions.
+`Held(lastProven, reason)` blocks advancement and preserves uncertainty.
+Preparation abort is possible only before terminal commit; subsequent refunds,
+disputes and compensation cannot rewrite that decision and require new funded,
+dual-signed obligations. No cross-instance ACID or real payment finality is
+claimed. The financial authority independently admits before separately
+authorized execution.
 
-**N7. Security and formal conformance before custody.**
-Preserve QR as the **sole presented participant identifier**, with live
-challenge-based proof, never a bearer authorization. Separate identity,
-endpoint, device and financial mandate keys or prove their signed-byte domains
-disjoint. Enforce independent local grants, replay-resistant attempt/nonce
-consumption, domain-separated signatures, consent/privacy constraints and
-strict exact monetary encoding. Start implementation from Lean/Quint
-specifications of per-scope authority, two-peer commit/abort, idempotency,
-partition HOLD and crash recovery; compile formal traces into Rust and
-biz-kit conformance tests. All real custody, KYC/AML, licensing, independent
-security/legal review and hardware authorization gates of D5 remain in force.
-The capability host never holds participant identity, consent or
-transaction-QR keys. It holds only its own node and operator keys, and the
-service refuses consent signed by any of them (gap G8).
+**N7. Proof-driven rollout before orchestration or custody.**
+Preserve QR as the sole presented participant identifier with live challenge
+proof, never bearer authorization. Keep participant/device consent keys off
+the host and separate node, endpoint, mandate, observation and settlement roles;
+the service independently refuses host/operator assertions of participant consent.
+Pin disjoint signing domains, exact monetary encoding (unsigned big-endian
+minor units in 0..2^63−1), replay-resistant IDs/nonces, independent local grants
+and privacy/disclosure policy. Review Lean/Quint cross-authority agreement,
+abort fencing, epoch/replay rejection, partition HOLD, independent crash/restart
+and mandated recovery **before synthetic cross-instance checkout orchestration**.
+Generated formal traces must replay against the actual Rust and Elixir hosts;
+model-to-model checks alone do not satisfy that gate. The current proof increment
+assumes authenticated messages, durable non-equivocating history and effective
+fencing, and supplies no production mutation endpoint. All D5 accounting,
+refinement, real custody, hardware, licensing, AML/KYC and independent
+security/legal/operator gates remain in force. The architecture stays Proposed
+until its open gaps are accepted and closed in both repositories.
+<!-- HAWALA_NORMATIVE_END -->
 
 ## Required reference deployment (not yet implemented)
 
@@ -132,15 +151,15 @@ the other's credit lots or collateral. Different scopes remain fenced.
 
 1. **Interface/spec (no money movement):** Freeze `HawalaCapabilityV1` ports,
    command/result envelopes, discovery, status, source authority and exact
-   signing domains. Publish a cross-repository test-vector matrix. Complete
-   ADR 0004 D1–D3 regression work.
+   signing domains. Publish a cross-repository test-vector matrix. Review the canonical cross-authority Lean/Quint increment and typed
+   evidence profile; complete ADR 0004 D1–D3 regression work.
 2. **Two-node read-only pilot:** Run two **separately administered** biz-kit
    processes and two real Iroh Hawala peers, explicit identity proof and
    source-attributed read-only evidence; restart/partition/replay tests.
    Public listing discovery through ActivityPub stays independent.
-3. **Synthetic payment orchestration:** Compose a test commerce checkout and
-   test payout with Hawala's M6-C7-admission simulator and M6-C6 coordination
-   model; keep all results non-executable and clearly test-only. Test
+3. **Synthetic payment orchestration, only after G1–G4 close:** Compose a test commerce checkout and
+   test payout with the reviewed cross-authority profile and host conformance
+   suite (M6-C6/C7 alone are insufficient); keep all results non-executable and clearly test-only. Test
    transaction QR, no cross-node shortcut, expiry, duplicate event, delayed
    receipt, unilateral abort, partition and recovery. Add a third peer with
    no authority to demonstrate routing separation.
@@ -164,11 +183,14 @@ five-step acceptance sequence above, which both records number the same way.
 ### Protocol semantics
 
 **G1. Finality states (N6). Blocks step 3.** "The required financial
-state" that lets a business workflow advance is undefined. Without it, a
-merchant cannot tell a reserved payment intent from being paid.
+state" needed an explicit definition. A reviewable typed evidence profile is
+now specified in [CROSS_AUTHORITY_V1](https://github.com/larsbx/hawala-core/blob/main/docs/CROSS_AUTHORITY_V1.md);
+acceptance and actual host/consumer verification remain open.
 *Closes when:* a typed state sequence is specified. A minimal version is
 `Proposed → Committed(intent) → Executed(observed) → Settled`, with
-`Held` and `Aborted` reachable from every state before `Settled`. For each
+`Held(lastProven, reason)` preserving proven history. Preparation `Aborted`
+is reachable only before terminal commit; post-commit compensation is a new
+obligation, never an abort/rewrite. For each
 state, the specification names:
 - the authority that signs it;
 - the exact signed bytes and their domain;
@@ -179,8 +201,8 @@ remittance) declares the minimum state it waits for.
 
 **G2. Decision coordinator and liveness (N2, N5). Blocks step 3.** M6-C6's
 "common decision order" across independent authorities is an atomic-commit
-problem, so some party must provide the order. N2 lists no role allowed to
-order decisions across scopes.
+problem, so some party must provide the order. N2 now proposes that scoped
+role under the canonical profile; mandate/fence implementation and independent acceptance remain open.
 *Closes when:* N2 and N5 name a scoped **decision coordinator** role, with
 mandate, keys and epoch fencing. Its liveness rules are stated:
 - A participant may abort unilaterally only before it prepares.
@@ -189,8 +211,10 @@ mandate, keys and epoch fencing. Its liveness rules are stated:
   which mandate, and with what evidence retained.
 
 **G3. Distributed commit model before orchestration (N7). Blocks step 3.**
-Step 3 composes a cross-authority checkout, but M6-C6 and M6-C7 model only
-one local journal.
+M6-C6 and M6-C7 alone model only one local journal. The new
+`CrossAuthority.lean` / `crossAuthority.qnt` increment models independent
+participants and blocking recovery. Its review and Rust/Elixir host
+conformance remain prerequisites; no synthetic orchestration is supplied.
 *Closes when:* a Quint/Lean model of the cross-authority commit is merged.
 It covers coordinator and participant messages, crashes and restarts,
 timeouts, partitions, duplicate and replayed messages, and abort fencing.
@@ -227,7 +251,7 @@ participant signature itself and never accepts the host's assertion of
 consent.
 
 *Status:* host-signed, pinned, versioned, grant- and body-bound admission
-and service-signed responses are in review in hawala-core #43. The socket
+and service-signed responses were merged in hawala-core #43. The socket
 transport, durable replay storage and the mapping from biz-kit grants to
 `GrantPolicy` remain open.
 
@@ -249,8 +273,9 @@ server signs in a person's name.
 to sign on a participant's behalf. The host's own node and operator keys
 stay distinct from participant keys.
 
-*Status:* N7 states the rule; N1 does not yet. The service-side refusal of host-signed
-consent is in review in hawala-core #43. The biz-kit host side remains open.
+*Status:* N1 and N7 now state the rule. The pure service-side refusal of
+host-signed consent was merged in hawala-core #43. The biz-kit host-side
+refusal and transport/durable replay integration remain open.
 
 **G9. Signing-domain guard and fixture integrity (ADR 0004 D3). Blocks
 step 1.** The interoperability vectors exist, but three follow-ups remained:
@@ -274,7 +299,9 @@ step 1.** The interoperability vectors exist, but three follow-ups remained:
 biz-kit #172.
 
 **G10. Exact money encoding (D5.3, N7). Blocks step 4.** N7 requires
-"i64/u64-safe" encodings without choosing one.
+exact encodings. The proposed canonical profile now selects 0..2^63−1
+unsigned big-endian minor units and publishes both boundaries; actual host
+schema, arithmetic and accounting range refinement remain open.
 *Closes when:* the specification fixes one encoding for amounts on the wire
 and in the biz-kit ledger. Either amounts are capped at 2^63−1 minor units
 everywhere, or they use decimal strings with a canonical grammar. The
@@ -282,10 +309,11 @@ specification also publishes vectors at both range boundaries.
 
 ### Process
 
-**G11. Lockstep text for N1–N7.** The paired N1–N7 texts differ in
-substance. Only hawala-core's N1 rules out a universal operator, a central
-server and a singleton registry. Only hawala-core's N5 requires retaining
-locks and original IDs on `HOLD`.
+**G11. Lockstep text for N1–N7.** The proposed paired increment now mirrors
+N1–N7 verbatim, with Hawala owning the canonical financial profile and formal
+artifacts. A biz-kit source pin/check verifies the exact reviewed Hawala
+commit and text/artifact digests. Acceptance in both repositories remains
+required; identical proposed wording alone does not close the architecture.
 *Closes when:* N1–N7 are reconciled into identical normative text, or one
 record becomes normative and the other points to it.
 

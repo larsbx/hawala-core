@@ -273,6 +273,13 @@ coordinator, authority, observer), which fields of terms, receipts and
 status each one may see. Routing and observer peers see no amounts or
 counterparties beyond what routing needs.
 
+*Status:* specified and implemented in hawala-core #51 (`hawala-disclosure`,
+`docs/DISCLOSURE.md`). Its digest is the manifest's
+`permitted_disclosure_policy_digest`. Finding: v1 manifests force leg agents
+to over-disclose, because evidence signs the whole manifest. Per-leg
+commitments are proposed as the v2 fix. Encryption of routed messages and
+hiding correlation identifiers remain open.
+
 ### Keys and identity
 
 **G8. Participant keys stay on participant devices (N1, N7). Blocks step 1.**

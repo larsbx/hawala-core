@@ -76,12 +76,12 @@ these binary scope and book IDs are protocol references.
 
 ## 3. Digest and state boundaries
 
-The registry, compiler, projection, journal and normalized-state digest values
-are opaque B32 commitments in this codec. Their construction and full replay
-semantics must be pinned by the actual accounting profile. This slice fixes
-the receipt bytes; it does not define those other object encodings or reinterpret
-the existing `hawala-ledger` BLAKE3 entry digest as SHA-256. Only the receipt ID
-algorithm is newly fixed here.
+The digest values remain B32 commitments in this receipt codec. The proposed
+[v1 accounting profile](NODE_BOOKS_ACCOUNTING_V1.md) now fixes registry/compiler
+encodings and journal/projection history commitments. Normalized-state encoding
+and actual replay/comparison remain open. The existing `hawala-ledger` BLAKE3
+entry digest is not reinterpreted as SHA-256. Receipt verification must use the
+exact accounting profile independently pinned by its consumer.
 
 The verifier must independently compute the expected digests after the full
 comparison required by the parent profile. A caller must not fill the expected
@@ -164,8 +164,8 @@ network, financial mutation or execution API. Test signing exists only in the
 checker with the public test seed. Formal financial transitions are unchanged;
 this increment claims byte/signature conformance, not Lean/Quint refinement.
 
-Remaining dependencies are the registry/compiler/state encodings and actual
-replay, durable PostgreSQL/TigerBeetle comparison, effective projector fencing,
+Remaining dependencies are normalized-state encoding and actual history replay,
+durable PostgreSQL/TigerBeetle comparison, effective projector fencing,
 authority/verifier discovery and succession, Rust/Elixir codec conformance and
 the execution gate's formal refinement. None of the paired ADR gaps is declared
 closed by these receipt vectors alone.

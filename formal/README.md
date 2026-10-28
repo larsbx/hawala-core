@@ -7,6 +7,13 @@ profile. Run `node tools/check_node_books_verification.mjs` and
 These are independent golden-vector and unsafe-mutation checks, not financial
 state-machine proofs or evidence that actual books agree.
 
+The [v1 accounting codec](../docs/NODE_BOOKS_ACCOUNTING_V1.md) specifies account
+registries, journal wrappers, deterministic transfer plans and history digests.
+Run `node tools/check_node_books_accounting.mjs` and
+`python3 tools/check_node_books_accounting_mutations.py` for independent vectors,
+synthetic differential checks and six unsafe-mutation controls. It has no
+database, admission or execution API and does not establish formal refinement.
+
 This layer specifies the merged TEST authority before adding reconciliation,
 adjudication or release behavior. A Rust change that alters admission, claiming,
 holds or recovery must first update this specification, prove its invariants,

@@ -162,7 +162,7 @@ contract.
 
 | Reference concept | TigerBeetle representation |
 | --- | --- |
-| Authority, legal book, currency and scale | Immutable registry mapping to a nonzero numeric `ledger` |
+| Authority, scope, legal book, currency and scale | Immutable registry mapping to a nonzero numeric `ledger` |
 | Debit-normal account | `credits_must_not_exceed_debits` |
 | Credit-normal account | `debits_must_not_exceed_credits` |
 | Journal debit and credit | One or more equal-amount debit-account/credit-account transfers on the same ledger |
@@ -176,6 +176,11 @@ semantics in [T4], and multi-currency composition in [T5]. Business holds use
 ordinary posted transfers in this profile. Native pending-transfer timers are
 disabled: cluster timeouts must not release collateral or a liability held by
 the Hawala protocol. A transfer posting does not establish physical delivery.
+
+The proposed [v1 registry and compiler encoding](NODE_BOOKS_ACCOUNTING_V1.md)
+defines canonical bytes, exact ID mappings, deterministic transfer plans and
+history commitments. It remains pure specification tooling without database
+admission, persistence or a deployed TigerBeetle client.
 
 Compile each valid journal deterministically:
 
@@ -379,10 +384,10 @@ requirements remain prerequisites to actual custody or money movement.
 - Pin server/client versions and test their exact result, batch and recovery
   semantics. Commit the real deployment manifest rather than rely on current
   web defaults.
-- Publish canonical bytes and domains for the account registry, compiler
-  manifest and checkpoint exports; bind them to existing event schemas without
-  changing old signatures. The v1 verification-record codec is specified
-  separately; its accounting inputs and deployed trust policy remain open.
+- Complete normalized-state and checkpoint-export encodings, and bind the
+  specified v1 registry/compiler and verification-record codecs to actual
+  history replay without changing old signatures. Deployed trust policy,
+  cluster-wide allocation and database conformance remain open.
 - Prove PostgreSQL durable append, key handling, anti-rollback and single-writer
   fencing for the chosen deployment; specify how projector access is fenced at
   the actual TigerBeetle network boundary.

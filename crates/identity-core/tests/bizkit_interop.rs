@@ -49,7 +49,8 @@ fn verify_vector_signature(v: &Value, message: &[u8]) {
     let public = ed25519_dalek::VerifyingKey::from_bytes(&pk).unwrap();
     assert!(public.verify_strict(message, &Signature::from_bytes(&sig)).is_ok());
     let mut changed = message.to_vec();
-    changed[changed.len() - 1] ^= 1;
+    let last = changed.len() - 1;
+    changed[last] ^= 1;
     assert!(public.verify_strict(&changed, &Signature::from_bytes(&sig)).is_err());
 }
 
@@ -63,9 +64,9 @@ fn assert_disjoint_from_bizkit_map(message: &[u8]) {
 #[test]
 fn possession_challenge_matches_shared_golden_vector() {
     let v = vector("possession-challenge");
-    assert_eq!(raw(&v, "seed_hex"), [1u8; 32]);
-    assert_eq!(raw(&v, "public_key_hex"), id(1).as_bytes());
-    assert_eq!(raw(&v, "verifier_key_hex"), id(2).as_bytes());
+    assert_eq!(raw(&v, "seed_hex"), vec![1u8; 32]);
+    assert_eq!(raw(&v, "public_key_hex").as_slice(), id(1).as_bytes());
+    assert_eq!(raw(&v, "verifier_key_hex").as_slice(), id(2).as_bytes());
 
     let challenge = Challenge {
         verifier: id(2),
@@ -73,7 +74,7 @@ fn possession_challenge_matches_shared_golden_vector() {
         purpose: v["purpose"].as_str().unwrap().to_owned(),
         expires_at: v["expires_at"].as_u64().unwrap(),
     };
-    assert_eq!(raw(&v, "nonce_hex"), challenge.nonce);
+    assert_eq!(raw(&v, "nonce_hex"), challenge.nonce.to_vec());
     let signed = sign_challenge(&key(1), &challenge).unwrap();
     assert_eq!(signed.claimant, id(1));
     assert_eq!(signed.signature.to_vec(), raw(&v, "signature_hex"));
@@ -99,10 +100,10 @@ fn possession_challenge_matches_shared_golden_vector() {
 #[test]
 fn merchant_credential_matches_shared_golden_vector() {
     let v = vector("merchant-credential");
-    assert_eq!(raw(&v, "seed_hex"), [4u8; 32]);
-    assert_eq!(raw(&v, "public_key_hex"), id(4).as_bytes());
-    assert_eq!(raw(&v, "subject_key_hex"), id(1).as_bytes());
-    assert_eq!(raw(&v, "credential_id_hex"), [9u8; 16]);
+    assert_eq!(raw(&v, "seed_hex"), vec![4u8; 32]);
+    assert_eq!(raw(&v, "public_key_hex").as_slice(), id(4).as_bytes());
+    assert_eq!(raw(&v, "subject_key_hex").as_slice(), id(1).as_bytes());
+    assert_eq!(raw(&v, "credential_id_hex"), vec![9u8; 16]);
     assert_eq!(v["kind"], "merchant");
     assert_eq!(v["scope"], "US-PA");
     let claim = CredentialClaim {

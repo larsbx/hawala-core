@@ -103,6 +103,9 @@ specifications of per-scope authority, two-peer commit/abort, idempotency,
 partition HOLD and crash recovery; compile formal traces into Rust and
 biz-kit conformance tests. All real custody, KYC/AML, licensing, independent
 security/legal review and hardware authorization gates of D5 remain in force.
+The capability host never holds participant identity, consent or
+transaction-QR keys. It holds only its own node and operator keys, and the
+service refuses consent signed by any of them (gap G8).
 
 ## Required reference deployment (not yet implemented)
 
@@ -223,6 +226,11 @@ handshake and per-call grant binding. The service re-verifies every
 participant signature itself and never accepts the host's assertion of
 consent.
 
+*Status:* host-signed, pinned, versioned, grant- and body-bound admission
+and service-signed responses are in review in hawala-core #43. The socket
+transport, durable replay storage and the mapping from biz-kit grants to
+`GrantPolicy` remain open.
+
 **G7. Disclosure model (N6). Blocks step 2.** N6 binds "permitted
 disclosure" into the correlation record, but no model defines it.
 *Closes when:* the specification states, per role (merchant, routing peer,
@@ -241,21 +249,29 @@ server signs in a person's name.
 to sign on a participant's behalf. The host's own node and operator keys
 stay distinct from participant keys.
 
+*Status:* N7 states the rule; N1 does not yet. The service-side refusal of host-signed
+consent is in review in hawala-core #43. The biz-kit host side remains open.
+
 **G9. Signing-domain guard and fixture integrity (ADR 0004 D3). Blocks
-step 1.** The interoperability vectors exist, but three follow-ups remain:
-- **Runtime guard:** nothing yet prevents a biz-kit signer other than
-  envelope signing (device statements, capability documents) from using a
-  key bound to a Hawala identity.
-- **Fixture drift:** the two fixture copies can diverge silently.
-- **Wording:** `0x68` is described as "not a CBOR header". Read as a CBOR
+step 1.** The interoperability vectors exist, but three follow-ups remained:
+- **Runtime guard:** no biz-kit signer was prevented from signing bytes in
+  Hawala's signing domain.
+- **Fixture drift:** the two fixture copies could diverge silently.
+- **Wording:** `0x68` was described as "not a CBOR header". Read as a CBOR
   initial byte it is a text-string head (major type 3), never a map head
   (major type 5).
 
 *Closes when:*
-- Binding a key to a Hawala identity excludes it from every non-envelope
-  signer.
+- biz-kit's ledger signer refuses to sign or verify any input beginning
+  with `hawala`. The check is byte-level, so it covers every key.
+- A biz-kit test pins every other direct Ed25519 call site to a
+  non-`hawala` prefix.
+- Hawala keeps every signing domain under the `hawala` prefix.
 - Both tests pin the fixture's SHA-256.
-- The wording states both readings.
+- The wording states both readings of `0x68`.
+
+*Status:* all criteria implemented, in review in hawala-core #41 and
+biz-kit #172.
 
 **G10. Exact money encoding (D5.3, N7). Blocks step 4.** N7 requires
 "i64/u64-safe" encodings without choosing one.

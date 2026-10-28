@@ -18,7 +18,7 @@ Biz-kit also hosts Eatsbot/Dispatch/SchoolOps business workflows. Financial prot
 
 Hawala-core alone defines QR-presented public-key identity protocol, bilateral terms, trust/obligation/credit semantics, exact FX/fees, custody and exposure invariants, balanced postings, admission/result states, clearing/coordination, financial receipts and the Iroh peer transport. Its Lean/Quint lifecycle definitions and generated traces are the reference for adapters.
 
-Biz-kit owns its own **general application-extension contract**, local business grants, business event history, per-domain workflow adapters, host supervision and source-attributed Hawala projections. Those are **not** alternative Hawala financial authorities. External products such as Eatsbot and d-patch consume their product/backend contracts; school-ops remains the authoritative curriculum content source.
+Biz-kit owns its own **general application-extension contract**, local business grants, business event history, per-domain workflow adapters, host supervision and source-attributed Hawala projections. Those are **not** alternative Hawala financial authorities. The legacy Eatsbot deployment is **scheduled for verified decommission**: its reusable marketing, commercial, fulfillment and delivery behavior will be salvaged into biz-kit cores, rather than maintained as a permanent independent product. The d-patch clients still consume the Dispatch backend contract; school-ops remains the authoritative curriculum content source.
 
 Maintain non-biz-kit Hawala peers as first-class interoperable participants.
 

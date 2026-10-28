@@ -135,7 +135,8 @@ See [crash-safe payout intent journal](docs/durable-payout-journal.md),
 [on-wire handshake](docs/iroh-wire-handshake.md) and
 [architecture and limitations](docs/architecture.md) and
 [identity without revocation](docs/decisions/0001-no-identity-revocations.md)
-and [QR companion labels](docs/decisions/0002-qr-companion-labels.md).
+and [QR companion labels](docs/decisions/0002-qr-companion-labels.md)
+and [biz-kit shared identity and scoped authority](docs/decisions/0004-biz-kit-shared-identity-scoped-authority.md).
 
 ## Local development
 

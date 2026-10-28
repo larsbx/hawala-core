@@ -1,0 +1,12 @@
+[package]
+name = "hawala-disclosure"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Per-role disclosure policy and fail-closed projection for cross-authority payment records"
+
+[dependencies]
+sha2 = "0.10"
+
+[dev-dependencies]
+hex = "0.4"

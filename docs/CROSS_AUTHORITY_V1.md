@@ -108,6 +108,10 @@ and uncertainty policy before admission. The
 prepare deadline applies only before reservation; **prepared reservations do
 not expire**. Expiry is never an abort fence.
 
+`permitted_disclosure_policy_digest` is the SHA-256 digest of a
+[disclosure policy](DISCLOSURE.md) (G7). It states which roles may see which
+parts of this record.
+
 For every evidence record, the exact Ed25519 signing input is:
 
 ```text

@@ -1126,6 +1126,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-disclosure"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "sha2 0.10.9",
+]
+
+[[package]]
 name = "hawala-flow"
 version = "0.1.0"
 dependencies = [

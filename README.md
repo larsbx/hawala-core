@@ -160,6 +160,13 @@ redirect succession. Equivocation is retained as a conflict, and manifest legs
 must match the exact current pinned epoch. There is no registry or revocation.
 See [authority descriptors](docs/AUTHORITY_DESCRIPTOR.md).
 
+The `hawala-disclosure` crate defines the per-role disclosure policy whose digest
+cross-authority manifests pin. Routing peers see nothing. Status observers see
+only correlation IDs and state, and may advance no workflow. Any verifier sees
+the whole manifest, because evidence signs its digest. `project` fails closed
+on unknown fields. See [disclosure](docs/DISCLOSURE.md), including why v1 forces
+leg agents to over-disclose.
+
 ## Local development
 
 ```sh

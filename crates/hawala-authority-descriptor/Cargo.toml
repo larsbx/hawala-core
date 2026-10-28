@@ -1,0 +1,15 @@
+[package]
+name = "hawala-authority-descriptor"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Signed authority descriptors and relying-party pinning with pre-committed succession (no global registry)"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+ed25519-dalek = "2.1"
+sha2 = "0.10"
+
+[dev-dependencies]
+hex = "0.4"
+serde_json = "1"

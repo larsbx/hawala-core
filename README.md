@@ -152,6 +152,13 @@ responses are service-signed. Participant consent is re-verified by the service
 and refused when any host key signed it. It grants no financial authority. See
 [the capability port](docs/CAPABILITY_PORT.md).
 
+The `hawala-authority-descriptor` crate defines signed, fixed-width authority
+descriptors and relying-party pinning. Trust starts only from an operator-pinned
+anchor. Each epoch pre-commits its successor key, so a stolen current key cannot
+redirect succession. Equivocation is retained as a conflict, and manifest legs
+must match the exact current pinned epoch. There is no registry or revocation.
+See [authority descriptors](docs/AUTHORITY_DESCRIPTOR.md).
+
 ## Local development
 
 ```sh

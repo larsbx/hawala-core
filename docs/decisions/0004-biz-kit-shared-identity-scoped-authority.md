@@ -40,7 +40,8 @@ finality or authority.
 
 **D3. One key may sign in both systems only under disjoint signing inputs.**
 Every identity-core signing input begins with `hawala-identity-core/v1\0`; its
-first byte `0x68` is a CBOR text-string head. biz-kit envelopes sign a
+first byte `0x68` is the raw ASCII `h` byte, not a CBOR header.
+biz-kit envelopes sign a
 canonical CBOR **map**, whose first byte lies in `0xA0..=0xBB`. The two input
 sets are therefore disjoint. That holds only while a shared key signs, in
 biz-kit, nothing except envelope cores (or other inputs proven disjoint), and
@@ -95,6 +96,9 @@ or bridged ledger.
 
 ## Next steps
 
-1. Publish identity-core test vectors that biz-kit verifies byte-for-byte (D1–D3).
-2. Add the D3 disjointness test on both sides.
+1. Maintain the published `crates/identity-core/test-vectors/bizkit_identity_v1.json`
+   as a cross-language signing-bytes and signature fixture (D1–D3), consumed by
+   Rust and by biz-kit's `apps/coop_substrate/test/hawala_interop_test.exs`.
+2. Implement explicit possession-verified local key binding and portable
+   evidence ingestion without granting financial authority (D1–D2).
 3. Only then consider a single-operator adapter behind M6-C's `admit` (D5).

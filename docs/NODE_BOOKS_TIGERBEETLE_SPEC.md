@@ -124,7 +124,7 @@ than reevaluating history using today's policy or clock.
 
 Amounts and natural account balances in this profile are integers in
 `0..=9223372036854775807` minor units. Each posting is nonzero on exactly one
-side. New native numeric fields use this common i64-safe range; unsigned
+side. New native monetary fields use this common i64-safe range; unsigned
 128-bit intermediates detect overflow. Rates use positive integer numerator
 and denominator, with explicit rounding and independently recorded fee legs.
 No binary floating point or implicit currency conversion is admitted.
@@ -240,8 +240,10 @@ A signed verification record binds `authority_id`, `scope_id`, epoch, source
 sequence/hash, journal digest, registry/compiler digests, cluster ID/generation,
 accounting-state digest, verifier identity and the previous verification
 record. It is an application attestation, not a native TigerBeetle consensus
-certificate or proof of actual assets. Exact signing bytes, domain and golden
-vectors MUST be specified before accepting such records across implementations.
+certificate or proof of actual assets. The proposed
+[v1 checkpoint encoding](NODE_BOOKS_VERIFICATION_V1.md) fixes its exact signing
+bytes, domain, receipt chain and golden vectors. Actual accounting comparison,
+trusted mandates and Rust/Elixir conformance remain implementation gates.
 
 An independent relying party verifies the pinned authority and verifier mandate,
 exact signed evidence, source continuity and the state required by its workflow.
@@ -378,8 +380,9 @@ requirements remain prerequisites to actual custody or money movement.
   semantics. Commit the real deployment manifest rather than rely on current
   web defaults.
 - Publish canonical bytes and domains for the account registry, compiler
-  manifest, verification records and checkpoint exports; bind them to existing
-  event schemas without changing old signatures.
+  manifest and checkpoint exports; bind them to existing event schemas without
+  changing old signatures. The v1 verification-record codec is specified
+  separately; its accounting inputs and deployed trust policy remain open.
 - Prove PostgreSQL durable append, key handling, anti-rollback and single-writer
   fencing for the chosen deployment; specify how projector access is fenced at
   the actual TigerBeetle network boundary.

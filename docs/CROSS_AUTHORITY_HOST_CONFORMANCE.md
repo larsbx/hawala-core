@@ -85,8 +85,9 @@ python3 tools/check_hawala_architecture_pin.py --source ../hawala-core
 ```
 
 This closes only the **selected persistent TEST-adapter conformance subtask**.
-It does not close G3 or D5.5 for an actual financial writer. Outstanding gates
-include mutually authenticated ports/Iroh delivery, durable real attempt/QR
+It does not close G3 or D5.5 for an actual financial writer. The next [restricted TEST endpoint/outbox increment](TEST_ENDPOINT_ORCHESTRATION.md)
+adds signed local RPC; its receipts confer no financial authority. Outstanding
+gates include actual financial capability ports/Iroh delivery, durable real attempt/QR
 consumption, exact signed-envelope and mandate verification, financial prepare
 admissibility under changing policy, actual authority/custody boundary fencing,
 accounting and real finality verification. Independent formal/security review

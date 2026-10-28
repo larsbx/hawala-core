@@ -568,3 +568,6 @@ pub fn test_workflow_gate(verified: bool, stage: &str, action: &str) -> Result<b
             || stage == "settled"
             || (action == "reserveCancelableOrder" && matches!(stage, "committed" | "executed"))))
 }
+
+#[cfg(unix)]
+pub mod endpoints;

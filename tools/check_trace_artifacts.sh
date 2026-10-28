@@ -33,3 +33,8 @@ lake env lean --run ExportCrossAuthority.lean tsv > "$trace_tmp/lifecycle.tsv"
 diff -u ../traces/crossAuthority.tsv "$trace_tmp/lifecycle.tsv"
 lake env lean --run ExportFinancialGates.lean > "$trace_tmp/lifecycle.tsv"
 diff -u ../traces/financialGates.tsv "$trace_tmp/lifecycle.tsv"
+
+lake env lean --run ExportEndpointOrchestration.lean > "$trace_tmp/lifecycle.tsv"
+diff -u ../traces/endpointOrchestration.tsv "$trace_tmp/lifecycle.tsv"
+lake env lean --run ExportEndpointOrchestration.lean quint > "$trace_tmp/conformance.qnt"
+diff -u ../quint/endpointOrchestrationConformance.qnt "$trace_tmp/conformance.qnt"

@@ -1,0 +1,124 @@
+import EndpointOrchestration
+set_option maxRecDepth 16384
+set_option maxHeartbeats 40000000
+open EndpointOrchestration
+namespace EndpointExport
+def alphabet : List (String × Event) := [
+  ("queue(1)", .queue 1), ("queue(2)", .queue 2), ("queue(3)", .queue 3),
+  ("admit(1,true,true)", .admit 1 true true), ("admit(2,true,true)", .admit 2 true true),
+  ("admit(3,true,true)", .admit 3 true true), ("admit(3,false,true)", .admit 3 false true),
+  ("admit(3,true,false)", .admit 3 true false), ("effect", .effect), ("finish", .finish),
+  ("reply(true)", .reply true), ("reply(false)", .reply false), ("timeout", .timeout),
+  ("restart", .restart), ("replay", .replay)]
+-- Untrusted finite search certificate; kernel checks every path and edge below.
+def graph : List (State × List String) := [
+  ({ stage := 0, effect := 0, target := 0, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, []),
+  ({ stage := 0, effect := 0, target := 0, pending := false, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)"]),
+  ({ stage := 0, effect := 0, target := 1, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)"]),
+  ({ stage := 0, effect := 0, target := 0, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["reply(true)"]),
+  ({ stage := 0, effect := 0, target := 1, pending := true, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)"]),
+  ({ stage := 0, effect := 1, target := 1, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect"]),
+  ({ stage := 0, effect := 0, target := 1, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "reply(true)"]),
+  ({ stage := 0, effect := 1, target := 1, pending := true, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish"]),
+  ({ stage := 0, effect := 1, target := 1, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "reply(true)"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "reply(true)"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)"]),
+  ({ stage := 1, effect := 1, target := 1, pending := false, commits := 0, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect"]),
+  ({ stage := 1, effect := 1, target := 2, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 2, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish"]),
+  ({ stage := 1, effect := 2, target := 2, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "reply(true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "reply(true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 2, desired := 3, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 2, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 2, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 0, desired := 0, outbox := false, held := false, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 0, desired := 1, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 2, desired := 3, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 2, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 2, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "reply(true)"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 2, desired := 2, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 0, desired := 0, outbox := false, held := true, paid := false }, ["admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 2, desired := 3, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)", "admit(3,true,true)", "effect"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 2, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 2, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "reply(true)"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 2, desired := 2, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)"]),
+  ({ stage := 2, effect := 2, target := 2, pending := false, commits := 0, client := 2, desired := 2, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 1, desired := 1, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 2, desired := 3, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 2, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 1, desired := 2, outbox := true, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 2, desired := 2, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect"]),
+  ({ stage := 2, effect := 2, target := 3, pending := true, commits := 0, client := 2, desired := 2, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 1, desired := 1, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 3, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 2, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 2, desired := 2, outbox := false, held := false, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "finish"]),
+  ({ stage := 2, effect := 3, target := 3, pending := true, commits := 1, client := 2, desired := 2, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 3, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "admit(2,true,true)", "effect", "finish", "reply(true)", "queue(3)", "admit(3,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 3, desired := 2, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "admit(3,true,true)", "effect", "finish", "reply(true)", "reply(true)"]),
+  ({ stage := 3, effect := 3, target := 3, pending := false, commits := 1, client := 2, desired := 2, outbox := false, held := true, paid := false }, ["queue(1)", "admit(1,true,true)", "effect", "finish", "reply(true)", "queue(2)", "admit(2,true,true)", "effect", "finish", "reply(true)", "admit(3,true,true)", "effect", "finish", "reply(true)"])]
+example : graph.length = 77 := by decide
+example : graph.all (fun p => alphabet.all (fun e =>
+    graph.any (fun q => decide (q.1 = step p.1 e.2)))) = true := by decide
+
+def event (name : String) : Event := ((alphabet.find? (fun p => p.1 == name)).getD ("restart", .restart)).2
+example : graph.all (fun p =>
+    p.2.all (fun name => alphabet.any (fun e => e.1 == name)) &&
+    decide (p.2.foldl (fun s name => step s (event name)) initial = p.1)) = true := by decide
+
+def fields (s : State) : List (String × String) := [
+  ("stage", toString s.stage), ("effect", toString s.effect), ("target", toString s.target),
+  ("pending", toString s.pending), ("commits", toString s.commits), ("client", toString s.client),
+  ("desired", toString s.desired), ("outbox", toString s.outbox),
+  ("held", toString s.held), ("paid", toString s.paid)]
+def record (s : State) := "{ " ++ String.intercalate ", " ((fields s).map fun (k,v) => k ++ ": " ++ v) ++ " }"
+end EndpointExport
+open EndpointExport
+def main (args : List String) : IO Unit := do
+  let out ← IO.getStdout
+  let quint := args == ["quint"]
+  if quint then out.putStrLn "// Generated by Lean; complete edges of the 77-state finite projection.\nmodule endpointOrchestrationConformance {\n  import endpointOrchestration.* from \"./endpointOrchestration\""
+  else out.putStrLn ("path\t" ++ String.intercalate "\t" ((fields initial).map Prod.fst))
+  let mut index := 0
+  for p in graph do
+    for e in alphabet do
+      let path := p.2 ++ [e.1]
+      let target := step p.1 e.2
+      if quint then
+        let acts := String.join (path.map (fun name => s!".then({name})"))
+        out.putStrLn s!"  run endpointEdge{index}Test = init{acts}.expect(s == {record target})"
+      else out.putStrLn (String.intercalate ";" path ++ "\t" ++ String.intercalate "\t" ((fields target).map Prod.snd))
+      index := index + 1
+  if quint then out.putStrLn "}"

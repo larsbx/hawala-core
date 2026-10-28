@@ -30,3 +30,7 @@ independent coordinator connections, and exit a subprocess after commit before
 publishing or acknowledging it. This demonstrates selected conformance and
 local persistence behavior under the specified tests, not universal refinement,
 Byzantine/rollback safety, power-loss guarantees or financial settlement.
+
+The opt-in signed local TEST service and paired business outbox are specified in
+[TEST_ENDPOINT_ORCHESTRATION](../../docs/TEST_ENDPOINT_ORCHESTRATION.md). Their
+receipts cannot attest payment or financial authority.

@@ -23,3 +23,8 @@ lake env lean --run ExportTestExecution.lean > "$trace_tmp/lifecycle.tsv"
 lake env lean --run ExportTestExecution.lean quint > "$trace_tmp/conformance.qnt"
 diff -u ../traces/testExecution.tsv "$trace_tmp/lifecycle.tsv"
 diff -u ../quint/testExecutionConformance.qnt "$trace_tmp/conformance.qnt"
+
+lake env lean --run ExportCrossAuthority.lean > "$trace_tmp/lifecycle.tsv"
+lake env lean --run ExportCrossAuthority.lean quint > "$trace_tmp/conformance.qnt"
+diff -u ../traces/crossAuthority.json "$trace_tmp/lifecycle.tsv"
+diff -u ../quint/crossAuthorityConformance.qnt "$trace_tmp/conformance.qnt"

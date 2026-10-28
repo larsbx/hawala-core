@@ -11,6 +11,11 @@ The later [M6-C7 coordinated admission profile](M6_C7_COORDINATED_ADMISSION.md)
 adds a separate common local decision/admission transaction. It does not import
 this standalone lab's flags or receipts as financial authority.
 
+The proposed [cross-authority v1 profile](CROSS_AUTHORITY_V1.md) adds a
+separate distributed **formal model**, exact evidence bytes and scoped blocking
+recovery rules. It does not turn this local journal into a distributed service
+or accept any real-custody/finality claim.
+
 ## 1. One decision for both reservations
 
 For each financial operation, pin the complete accepted exchange terms, both

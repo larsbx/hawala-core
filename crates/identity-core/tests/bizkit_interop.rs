@@ -14,9 +14,20 @@ fn id(n: u8) -> IdentityId {
     IdentityId::from_signing_key(&key(n))
 }
 
+/// The same fixture is committed in biz-kit
+/// (`apps/coop_substrate/test/vectors/hawala_identity_v1.json`), which pins the
+/// same digest. Change both copies and both pins together.
+const FIXTURE: &[u8] = include_bytes!("../test-vectors/bizkit_identity_v1.json");
+const FIXTURE_SHA256: &str = "5b1b9406b7d40d45d14756c5e058af13908a54d481d2c7675faed38ead44a990";
+
+#[test]
+fn fixture_matches_the_digest_pinned_in_both_repositories() {
+    use sha2::{Digest, Sha256};
+    assert_eq!(hex::encode(Sha256::digest(FIXTURE)), FIXTURE_SHA256);
+}
+
 fn vector(name: &str) -> Value {
-    let document: Value =
-        serde_json::from_str(include_str!("../test-vectors/bizkit_identity_v1.json")).unwrap();
+    let document: Value = serde_json::from_slice(FIXTURE).unwrap();
     assert_eq!(document["schema"], "hawala-identity-core-interoperability-v1");
     document["vectors"]
         .as_array()
@@ -55,7 +66,8 @@ fn verify_vector_signature(v: &Value, message: &[u8]) {
 }
 
 fn assert_disjoint_from_bizkit_map(message: &[u8]) {
-    // Raw ASCII h (0x68), NOT a CBOR text-string header in Hawala's wire protocol.
+    // ASCII `h` (0x68). Hawala's encoding is not CBOR, but read as a CBOR
+    // initial byte this is a text-string head, never a map head (0xA0..=0xBB).
     assert!(message.starts_with(b"hawala-identity-core/v1\0"));
     assert_eq!(message[0], 0x68);
     assert!(!(0xA0..=0xBB).contains(&message[0]));

@@ -39,14 +39,21 @@ does not prove validity (re-verify the Hawala signature), cash movement,
 finality or authority.
 
 **D3. One key may sign in both systems only under disjoint signing inputs.**
-Every identity-core signing input begins with `hawala-identity-core/v1\0`; its
-first byte `0x68` is the raw ASCII `h` byte, not a CBOR header.
-biz-kit envelopes sign a
-canonical CBOR **map**, whose first byte lies in `0xA0..=0xBB`. The two input
-sets are therefore disjoint. That holds only while a shared key signs, in
-biz-kit, nothing except envelope cores (or other inputs proven disjoint), and
-both repos must pin it with a test. Identity keys remain distinct from Iroh
-endpoint keys.
+Every Hawala signing input begins with the bytes `hawala`. For identity-core
+the prefix is `hawala-identity-core/v1\0`. Its first byte, `0x68`, is ASCII
+`h`. Hawala's encoding is not CBOR, but read as a CBOR initial byte `0x68`
+would be a text-string head (major type 3), never a map head (major type 5).
+biz-kit envelopes sign a canonical CBOR **map**, whose first byte lies in
+`0xA0..=0xBB`, so the two input sets are disjoint. Both sides enforce this:
+
+- biz-kit's ledger signer refuses to sign or verify any input that begins
+  with `hawala`.
+- A biz-kit test pins every other direct Ed25519 call site to a
+  non-`hawala` prefix.
+- Hawala keeps every signing domain under the `hawala` prefix.
+- Both repositories pin the shared interoperability fixture by SHA-256.
+
+Identity keys remain distinct from Iroh endpoint keys.
 
 **D4. biz-kit is never the network-wide Hawala ledger.** No global balance
 database or central transaction server is introduced. Gossip, federation,

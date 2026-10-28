@@ -143,7 +143,8 @@ See [crash-safe payout intent journal](docs/durable-payout-journal.md),
 and [QR companion labels](docs/decisions/0002-qr-companion-labels.md)
 and [biz-kit shared identity and scoped authority](docs/decisions/0004-biz-kit-shared-identity-scoped-authority.md)
 and [network-native Hawala across federated biz-kit instances](docs/decisions/0005-biz-kit-federated-hawala-integration.md)
-and the proposed [cross-authority evidence/commit proof profile](docs/CROSS_AUTHORITY_V1.md).
+and the proposed [cross-authority evidence/commit proof profile](docs/CROSS_AUTHORITY_V1.md)
+and [persistent TEST-host conformance](docs/CROSS_AUTHORITY_HOST_CONFORMANCE.md).
 
 The `hawala-capability-port` crate is the reference admission logic for the
 `HawalaCapabilityV1` local port between a host platform and its Hawala service.
@@ -204,6 +205,13 @@ safety and exhaustively checks a finite instance with a duplicate-claim negative
 control. Its CI gates precede further financial state-machine changes; the
 model-to-Rust correspondence and remaining refinement obligations are explicit.
 
+The proposed [node-owned books and distributed TigerBeetle profile](docs/NODE_BOOKS_TIGERBEETLE_SPEC.md)
+specifies a canonical signed history and PostgreSQL financial commit per
+installation, with a deterministically compiled and verified TigerBeetle
+accounting copy. Replication stays within each authority domain; independent
+authorities coordinate through Hawala. This is an implementation specification,
+not an implemented adapter or a change to the existing single-commit gates.
+
 The [bilateral coordination and resolution contract](docs/M6_C6_COORDINATION.md)
 adds an isolated durable test journal for two synthetic reservations and one
 permanent commit-or-abort decision. Lean/Quint proofs and generated Rust traces
@@ -230,3 +238,4 @@ cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
 still require a live authenticated Iroh session. The lab requires prior synthetic
 M6-C7 commitment for export, permanently consumes holder responses as held
 evidence, and cannot authorize hardware, cash delivery, retry or financial release.
+

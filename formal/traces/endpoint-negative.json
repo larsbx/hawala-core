@@ -1,0 +1,338 @@
+[
+  {
+    "mutation": "unsafeReceivedStep",
+    "backend": "Quint 0.32.0 / TLC",
+    "states": [
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "mutation": "unsafeUnboundStep",
+    "backend": "Quint 0.32.0 / TLC",
+    "states": [
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 3,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      }
+    ]
+  },
+  {
+    "mutation": "unsafeForgetStep",
+    "backend": "Quint 0.32.0 / TLC",
+    "states": [
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 1,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 0,
+        "target": 1,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 1,
+        "target": 1,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 1,
+        "target": 2,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 1,
+        "target": 2,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 2,
+        "target": 2,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 3,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 1,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 3,
+        "pending": false,
+        "commits": 1,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      }
+    ]
+  },
+  {
+    "mutation": "unsafeRetryStep",
+    "backend": "Quint 0.32.0 / TLC",
+    "states": [
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 0,
+        "outbox": false,
+        "held": false,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 0,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 0,
+        "stage": 0,
+        "target": 1,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 0,
+        "target": 1,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 1,
+        "target": 1,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 1,
+        "stage": 1,
+        "target": 2,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 1,
+        "target": 2,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 2,
+        "target": 2,
+        "pending": false,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 2,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 0,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 3,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 1,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      },
+      {
+        "effect": 3,
+        "stage": 2,
+        "target": 3,
+        "pending": true,
+        "commits": 2,
+        "client": 0,
+        "desired": 1,
+        "outbox": true,
+        "held": true,
+        "paid": false
+      }
+    ]
+  }
+]

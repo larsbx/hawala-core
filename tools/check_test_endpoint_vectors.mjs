@@ -1,0 +1,21 @@
+// Public TEST seeds only. Independent Node encoding pins the local RPC bytes.
+import { createHash,createPrivateKey,createPublicKey,sign,verify } from 'node:crypto';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const key=n=>createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),Buffer.alloc(32,n)]),format:'der',type:'pkcs8'});
+const pub=k=>createPublicKey(k).export({format:'der',type:'spki'}).subarray(-32);
+const hash=b=>createHash('sha256').update(b).digest();
+const u64=n=>{const b=Buffer.alloc(8);b.writeBigUInt64BE(BigInt(n));return b;};
+const host=key(1),service=key(2),attempt=Buffer.alloc(32,4),binding=Buffer.alloc(32,5);
+const id=hash(Buffer.concat([Buffer.from('hawala/TEST-outbox/id/v1\0'),attempt,binding,u64(1)]));
+const input=Buffer.concat([Buffer.from('hawala/TEST-endpoints/request/v1\0'),Buffer.from([1]),pub(service),pub(host),Buffer.alloc(32,3),u64(1),id,attempt,binding,u64(100),u64(160)]);
+const request=Buffer.concat([input,sign(null,input,host)]);
+const output=Buffer.concat([Buffer.from('hawala/TEST-endpoints/response/v1\0'),pub(service),hash(request),attempt,binding,Buffer.from([1,0,0,0]),u64(1)]);
+const response=Buffer.concat([output,sign(null,output,service)]);
+assert(verify(null,input,createPublicKey(host),request.subarray(-64)));
+assert(verify(null,output,createPublicKey(service),response.subarray(-64)));
+const fixture='request_hex\tresponse_hex\n'+request.toString('hex')+'\t'+response.toString('hex')+'\n';
+const path=new URL('../formal/evidence/testEndpoints.tsv',import.meta.url);
+if(process.argv.includes('--write'))fs.writeFileSync(path,fixture);
+assert.equal(fs.readFileSync(path,'utf8'),fixture,'TEST endpoint byte drift');
+console.log('PASS: independent Node TEST request/response signing vectors');

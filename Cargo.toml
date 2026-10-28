@@ -11,5 +11,6 @@ members = [
   "crates/hawala-controller-fence",
   "crates/hawala-capability-port",
   "crates/hawala-authority-descriptor",
+  "crates/hawala-cross-authority-test",
 ]
 resolver = "2"

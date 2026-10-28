@@ -9,6 +9,11 @@ Deposit custody supports [independent escrow and federated dar custody through
 one interface](docs/custody-interface.md). Both preserve the same collateral,
 liability and default-recovery rules; live providers remain unconfigured.
 
+> Cross-repository alignment (proposed): [ADR 0006](docs/decisions/0006-biz-kit-extension-host-boundary.md)
+> defines Hawala's canonical financial ownership and its biz-kit extension-host
+> boundary. ADR 0004 D1–D6 remain in force; the N1–N7 native-integration
+> proposal in PR #42 is not yet accepted.
+>
 # hawala-core
 
 A protocol-first, Iroh-native peer-to-peer **hawala** network. Hawala obligations,

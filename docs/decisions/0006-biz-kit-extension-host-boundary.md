@@ -8,7 +8,7 @@ Companion: [biz-kit cross-repository extension ADR](https://github.com/larsbx/bi
 
 ADR [0004](0004-biz-kit-shared-identity-scoped-authority.md), merged in #40, establishes D1–D6: explicit public-key identity binding, portable but nonauthoritative attestations, disjoint signing inputs, no global Hawala ledger, optional strictly scoped D5 financial authority, and Hawala-controlled inter-authority coordination.
 
-ADR [0005](0005-biz-kit-federated-hawala-integration.md) is **proposed in open PR #42**, paired with biz-kit #173; it defines proposed N1–N7 for native Hawala capability throughout a federation of independently administered biz-kit installations. Its G1–G11 unresolved gaps include distributed coordinator/decision semantics, signed financial finality, disclosure, authority pinning, authentication, host key isolation and normative text drift. This document adds the **cross-repository ownership boundary**; it neither accepts 0005 nor overrides 0004.
+ADR [0005](0005-biz-kit-federated-hawala-integration.md) was merged as a **Proposed** ADR via PR #42, paired with merged biz-kit #173; it defines proposed N1–N7 for native Hawala capability throughout a federation of independently administered biz-kit installations. Its G1–G11 unresolved gaps include distributed coordinator/decision semantics, signed financial finality, disclosure, authority pinning, authentication, host key isolation and normative text drift. This document adds the **cross-repository ownership boundary**; it neither accepts 0005 nor overrides 0004.
 
 Biz-kit also hosts Eatsbot/Dispatch/SchoolOps business workflows. Financial protocol details must not migrate into domain applications simply to make Hawala convenient to invoke.
 
@@ -68,7 +68,7 @@ The ability to run a financial *simulator* is not a waiver for any gate.
 
 Pair this decision with biz-kit's platform-extension ADR and the application-specific source-of-truth decisions in Eatsbot, d-patch and school-ops. Version Hawala wire contracts independently of the general extension-manifest version. Reject a host that changes participant consent, fabricates financial finality, bypasses a scoped named authority, sends private payment details over public ActivityPub, or double-posts a financial lot.
 
-Any change to D1–D6 must update and review the paired existing ADRs. Any proposed change to N1–N7 must be reconciled with both still-open 0005/#42 and biz-kit/#173, including G11's non-identical text. Do not silently declare the proposed pair accepted.
+Any change to D1–D6 must update and review the paired existing ADRs. Any proposed change to N1–N7 must be reconciled with the merged but still-Proposed ADR 0005/#42 and biz-kit/#173, including G11's non-identical text. Merging architectural records does not close G1–G11 or establish live authority.
 
 ## Implementation order and verification
 

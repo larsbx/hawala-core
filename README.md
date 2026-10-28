@@ -136,7 +136,8 @@ See [crash-safe payout intent journal](docs/durable-payout-journal.md),
 [architecture and limitations](docs/architecture.md) and
 [identity without revocation](docs/decisions/0001-no-identity-revocations.md)
 and [QR companion labels](docs/decisions/0002-qr-companion-labels.md)
-and [biz-kit shared identity and scoped authority](docs/decisions/0004-biz-kit-shared-identity-scoped-authority.md).
+and [biz-kit shared identity and scoped authority](docs/decisions/0004-biz-kit-shared-identity-scoped-authority.md)
+and [network-native Hawala across federated biz-kit instances](docs/decisions/0005-biz-kit-federated-hawala-integration.md).
 
 The `hawala-capability-port` crate is the reference admission logic for the
 `HawalaCapabilityV1` local port between a host platform and its Hawala service.

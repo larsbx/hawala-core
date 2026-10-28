@@ -261,3 +261,36 @@ fn independent_node_fixture_pins_the_exact_signed_rpc_bytes() {
     );
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn lost_reply_at_every_completed_phase_is_resolved_by_fresh_status() {
+    let (root, s, h, k) = fixture();
+    let q = call(4, 10, &h, &k).sign(&h);
+    assert!(
+        verify_response(
+            &s.handle(&q, 101).unwrap(),
+            &q,
+            k.verifying_key().to_bytes()
+        )
+        .unwrap()
+        .held
+    );
+    for op in 1..=3 {
+        // Discard each mutation reply, as if the connection failed after commit.
+        s.handle(&call(op, op, &h, &k).sign(&h), 101).unwrap();
+        let q = call(4, 10 + op, &h, &k).sign(&h);
+        assert_eq!(
+            verify_response(
+                &s.handle(&q, 102).unwrap(),
+                &q,
+                k.verifying_key().to_bytes()
+            )
+            .unwrap(),
+            View {
+                stage: op,
+                held: false
+            }
+        );
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

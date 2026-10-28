@@ -387,7 +387,10 @@ impl Service {
                 &c,
                 View {
                     stage,
-                    held: busy || unavailable || stage == 0 || c.operation > stage + 1,
+                    held: busy
+                        || unavailable
+                        || stage == 0
+                        || (c.operation != 4 && c.operation > stage + 1),
                 },
             );
             tx.execute(

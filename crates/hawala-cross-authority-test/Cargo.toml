@@ -1,0 +1,18 @@
+[package]
+name = "hawala-cross-authority-test"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "TEST-ONLY durable host conformance; no financial authority or execution"
+
+[features]
+default = []
+conformance = ["dep:rusqlite", "dep:serde_json"]
+
+[dependencies]
+rusqlite = { version = "0.37", features = ["bundled"], optional = true }
+serde_json = { version = "1", optional = true }
+
+[[test]]
+name = "host"
+required-features = ["conformance"]

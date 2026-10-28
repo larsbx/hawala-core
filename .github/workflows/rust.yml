@@ -12,3 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --workspace --all-targets
+
+      - name: Durable TEST host cross-authority conformance
+        run: cargo test -p hawala-cross-authority-test --features conformance

@@ -138,6 +138,13 @@ See [crash-safe payout intent journal](docs/durable-payout-journal.md),
 and [QR companion labels](docs/decisions/0002-qr-companion-labels.md)
 and [biz-kit shared identity and scoped authority](docs/decisions/0004-biz-kit-shared-identity-scoped-authority.md).
 
+The `hawala-capability-port` crate is the reference admission logic for the
+`HawalaCapabilityV1` local port between a host platform and its Hawala service.
+Calls are host-signed, pinned, versioned, grant-bound and replay-fenced, and
+responses are service-signed. Participant consent is re-verified by the service
+and refused when any host key signed it. It grants no financial authority. See
+[the capability port](docs/CAPABILITY_PORT.md).
+
 ## Local development
 
 ```sh

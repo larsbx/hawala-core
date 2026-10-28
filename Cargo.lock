@@ -1049,6 +1049,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-capability-port"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "ed25519-dalek 2.2.0",
+ "hawala-identity-core",
+ "hawala-interaction",
+ "hawala-protocol",
+ "hawala-qr-auth",
+]
+
+[[package]]
 name = "hawala-commit-sim"
 version = "0.1.0"
 dependencies = [

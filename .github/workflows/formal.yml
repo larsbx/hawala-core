@@ -4,6 +4,17 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  node-books-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check node books checkpoint bytes and signed vectors
+        run: node tools/check_node_books_verification.mjs
+      - name: Require intended unsafe codec counterexamples
+        run: python3 tools/check_node_books_verification_mutations.py
   lean:
     runs-on: ubuntu-latest
     steps:
@@ -40,3 +51,4 @@ jobs:
           bash tools/check_coordinated_admission.sh
           bash tools/check_test_execution.sh
           bash tools/check_cross_authority.sh
+

@@ -1,5 +1,12 @@
 # Proof-driven financial state machine — first verification layer
 
+The [node books checkpoint codec](../docs/NODE_BOOKS_VERIFICATION_V1.md) adds
+read-only byte/signature conformance for the proposed PostgreSQL/TigerBeetle
+profile. Run `node tools/check_node_books_verification.mjs` and
+`python3 tools/check_node_books_verification_mutations.py` from repository root.
+These are independent golden-vector and unsafe-mutation checks, not financial
+state-machine proofs or evidence that actual books agree.
+
 This layer specifies the merged TEST authority before adding reconciliation,
 adjudication or release behavior. A Rust change that alters admission, claiming,
 holds or recovery must first update this specification, prove its invariants,
@@ -249,3 +256,4 @@ finite conformance are not universal Rust refinement or proof of signature
 soundness, real custody, an honest unique external authority or physical delivery.
 The [terminal authority contract](../docs/M6_C8_TEST_TERMINAL_AUTHORITY.md) states
 the persistence, epoch and authority assumptions and the remaining live gates.
+

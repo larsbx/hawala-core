@@ -94,7 +94,8 @@ query may finish the endpoint journal only after reading complete durable actor
 effects for that target; it never sends those effects again. A partial prepare,
 missing actor, aborted history or uncertain completion stays HOLD. There is no
 automatic abort, empty-history enrollment, speculative retry or timeout release.
-Current status rechecks actor availability even after an earlier complete ACK.
+Every fresh call rechecks actor availability even after an earlier complete ACK;
+a new request for an old phase cannot bypass missing-history HOLD.
 
 The Elixir outbox records and syncs the complete signed dispatch before send,
 then records a verified response or uncertain result. Restart never resends a
@@ -121,15 +122,17 @@ held without replay. Missing history after completion makes fresh status held.
 arbitrary finite histories: at most one TEST commit effect, client progress no
 higher than completed service state, no paid state, invalid/duplicate admission
 stuttering, no replacement while pending, timeout preserving effects/outbox, and
-no completion of unresolved effects. Signature validity, request freshness,
+no completion of unresolved effects. A held business state blocks new mutation
+dispatch even when there is no pending mutation; only a verified status reply
+may clear that hold. Signature validity, request freshness,
 durable storage and complete actor observation are abstract premises. The
 partial actor implementation is covered by the earlier cross-authority model
 and targeted runtime failures; no end-to-end refinement theorem is asserted.
 
 `endpointOrchestration.qnt` independently defines this safety machine. TLC
-exhaustively checks its 77 reachable states. The Lean exporter contains a finite
+exhaustively checks its 101 reachable states. The Lean exporter contains a finite
 search certificate: the kernel checks every witness path and closure under all
-15 model actions. Its 1,155 generated edge witnesses are compared against Quint.
+15 model actions. Its 1,515 generated edge witnesses are compared against Quint.
 The restart action assumes retained durable state; it does not prove filesystem
 power-loss or database recovery. No availability, fairness or bounded recovery
 liveness theorem is claimed: partitions and missing history may block forever.

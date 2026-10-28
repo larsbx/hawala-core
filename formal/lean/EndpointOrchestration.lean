@@ -23,7 +23,7 @@ inductive Event where
 
 def initial : State := {}
 def step (s : State) (e : Event) : State := match e with
-  | .queue n => if ¬s.outbox ∧ n = s.client + 1 ∧ n ≤ 3 then
+  | .queue n => if ¬s.held ∧ ¬s.outbox ∧ n = s.client + 1 ∧ n ≤ 3 then
       {s with desired := n, outbox := true, held := true} else s
   | .admit n valid fresh => if valid ∧ fresh ∧ ¬s.pending ∧ n = s.stage + 1 ∧ n ≤ 3 then
       {s with target := n, pending := true} else s
@@ -31,7 +31,7 @@ def step (s : State) (e : Event) : State := match e with
       {s with effect := s.target, commits := s.commits + if s.target = 3 then 1 else 0} else s
   | .finish => if s.pending ∧ s.effect = s.target then
       {s with stage := s.target, pending := false} else s
-  | .reply valid => if valid ∧ s.outbox ∧ ¬s.pending ∧ s.stage ≥ s.desired then
+  | .reply valid => if valid ∧ ¬s.pending ∧ s.stage ≥ s.desired then
       {s with client := s.stage, outbox := false, held := false} else {s with held := true}
   | .timeout => {s with held := true}
   | .restart | .replay => s
@@ -70,6 +70,8 @@ theorem duplicate_request_stutters (s : State) (n : Nat) (valid : Bool) :
     step s (.admit n valid false) = s := by simp [step]
 theorem pending_blocks_replacement (s : State) (n : Nat) (h : s.pending = true) :
     step s (.admit n true true) = s := by simp [step,h]
+theorem held_blocks_business_dispatch (s : State) (n : Nat) (h : s.held = true) :
+    step s (.queue n) = s := by simp [step,h]
 theorem timeout_preserves_effects (s : State) :
     (step s .timeout).effect = s.effect ∧ (step s .timeout).commits = s.commits ∧
     (step s .timeout).outbox = s.outbox := by simp [step]

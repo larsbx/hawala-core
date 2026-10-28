@@ -379,8 +379,13 @@ impl Service {
         }
         let stage = row.as_ref().map_or(0, |r| r.2);
         let busy = row.as_ref().is_some_and(|r| r.3.is_some());
-        let unavailable = c.operation == 4 && stage > 0 && self.observed(&c).ok() != Some(stage);
-        if c.operation == 4 || stage >= c.operation || busy || c.operation != stage + 1 {
+        let unavailable = stage > 0 && self.observed(&c).ok() != Some(stage);
+        if c.operation == 4
+            || stage >= c.operation
+            || busy
+            || unavailable
+            || c.operation != stage + 1
+        {
             let reply = response(
                 &self.key,
                 raw,

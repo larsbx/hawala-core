@@ -17,7 +17,7 @@ for mutation in unsafeReceivedStep unsafeUnboundStep unsafeForgetStep unsafeRetr
   grep -Fq 'Invariant q_inv is violated' "$negative"
 done
 "$quint_bin" test formal/quint/endpointOrchestrationConformance.qnt --backend=typescript --seed=1 | tee "$traces"
-grep -Eq '^  1155 passing' "$traces"
+grep -Eq '^  1515 passing' "$traces"
 python3 tools/check_endpoint_counterexamples.py
 
 node tools/check_test_endpoint_vectors.mjs

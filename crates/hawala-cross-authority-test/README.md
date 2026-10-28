@@ -3,7 +3,8 @@
 This optional, **test-only** crate implements the canonical cross-authority
 transition boundary using three separate SQLite journals. It has no library
 surface unless `conformance` is explicitly enabled. No other workspace crate
-depends on it. It has no network, signing, custody, payment or execution API.
+depends on it. The opt-in local TEST RPC signs lab receipts only; it has no financial signing,
+custody, payment or execution API.
 
 ```sh
 cargo test -p hawala-cross-authority-test --features conformance

@@ -68,9 +68,9 @@ copy hashes and unchanged identical N1–N7/G1–G11 text. Editing either copy o
 following unpinned `main` is rejected.
 
 Rust's default build excludes the test API; CI explicitly enables its
-`conformance` feature for these tests. Elixir compiles both adapter modules only
+`conformance` feature for these tests. Elixir compiles all four TEST adapter/endpoint modules only
 from `test/support` in `MIX_ENV=test`; CI also checks that a production build
-contains neither module. No live endpoint or business workflow calls either
+contains none of these modules. No production endpoint or domain business workflow calls either
 adapter. Production authority/custody semantics remain solely Hawala-owned.
 
 ## Reproduce and remaining obligations

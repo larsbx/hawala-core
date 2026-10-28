@@ -207,23 +207,35 @@ fn incomplete_effects_hold_and_never_start_a_replacement() {
 }
 
 #[test]
-fn current_status_holds_if_an_independent_actor_store_is_missing() {
-    let (root, s, h, k) = fixture();
-    for op in 1..=3 {
-        s.handle(&call(op, op, &h, &k).sign(&h), 101).unwrap();
+fn fresh_requests_hold_if_an_independent_actor_store_is_missing() {
+    for completed in 1..=3 {
+        let (root, s, h, k) = fixture();
+        for op in 1..=completed {
+            s.handle(&call(op, op, &h, &k).sign(&h), 101).unwrap();
+        }
+        std::fs::remove_file(root.join(hex(&[4; 32])).join("right.db")).unwrap();
+        for op in 1..=4 {
+            let q = call(op, 10 + op, &h, &k).sign(&h);
+            assert!(
+                verify_response(
+                    &s.handle(&q, 102).unwrap(),
+                    &q,
+                    k.verifying_key().to_bytes()
+                )
+                .unwrap()
+                .held
+            );
+        }
+        let db = rusqlite::Connection::open(root.join("endpoint.db")).unwrap();
+        let pending: Option<Vec<u8>> = db
+            .query_row("SELECT inflight FROM attempts", [], |r| r.get(0))
+            .unwrap();
+        assert!(
+            pending.is_none(),
+            "missing history must not admit a new effect"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
-    std::fs::remove_file(root.join(hex(&[4; 32])).join("right.db")).unwrap();
-    let q = call(4, 4, &h, &k).sign(&h);
-    assert!(
-        verify_response(
-            &s.handle(&q, 101).unwrap(),
-            &q,
-            k.verifying_key().to_bytes()
-        )
-        .unwrap()
-        .held
-    );
-    std::fs::remove_dir_all(root).unwrap();
 }
 
 #[test]

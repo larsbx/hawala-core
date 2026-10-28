@@ -3,7 +3,7 @@ module endpointOrchestration {
     client: int, desired: int, outbox: bool, held: bool, paid: bool }
   action init = s' = { stage:0, effect:0, target:0, pending:false, commits:0,
     client:0, desired:0, outbox:false, held:false, paid:false }
-  action queue(n) = s' = if (not(s.outbox) and n == s.client+1 and n <= 3)
+  action queue(n) = s' = if (not(s.held) and not(s.outbox) and n == s.client+1 and n <= 3)
     s.with("desired",n).with("outbox",true).with("held",true) else s
   action admit(n,valid,fresh) = s' = if (valid and fresh and not(s.pending) and n == s.stage+1 and n <= 3)
     s.with("target",n).with("pending",true) else s
@@ -11,7 +11,7 @@ module endpointOrchestration {
     s.with("effect",s.target).with("commits",s.commits+(if(s.target==3) 1 else 0)) else s
   action finish = s' = if(s.pending and s.effect == s.target)
     s.with("stage",s.target).with("pending",false) else s
-  action reply(valid) = s' = if(valid and s.outbox and not(s.pending) and s.stage >= s.desired)
+  action reply(valid) = s' = if(valid and not(s.pending) and s.stage >= s.desired)
     s.with("client",s.stage).with("outbox",false).with("held",false) else s.with("held",true)
   action timeout = s' = s.with("held",true)
   action restart = s' = s

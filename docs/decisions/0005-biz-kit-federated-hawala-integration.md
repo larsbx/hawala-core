@@ -150,6 +150,129 @@ the other's credit lots or collateral. Different scopes remain fenced.
    security/legal review and operator obligations. No production payment,
    credit or ATM operations before these gates.
 
+## Open gaps (must close before Accepted)
+
+This section is **identical** in hawala-core ADR 0005 and in biz-kit's
+network-native Hawala record. Edit it in both, in the same change. A gap
+closes only when its exit criterion is merged in both repositories. The
+acceptance step it blocks cannot start before then. Steps refer to the
+five-step acceptance sequence above, which both records number the same way.
+
+### Protocol semantics
+
+**G1. Finality states (N6). Blocks step 3.** "The required financial
+state" that lets a business workflow advance is undefined. Without it, a
+merchant cannot tell a reserved payment intent from being paid.
+*Closes when:* a typed state sequence is specified. A minimal version is
+`Proposed → Committed(intent) → Executed(observed) → Settled`, with
+`Held` and `Aborted` reachable from every state before `Settled`. For each
+state, the specification names:
+- the authority that signs it;
+- the exact signed bytes and their domain;
+- what a relying instance verifies before acting on it.
+
+Each consuming workflow (checkout, dispatch fee, group-buy release,
+remittance) declares the minimum state it waits for.
+
+**G2. Decision coordinator and liveness (N2, N5). Blocks step 3.** M6-C6's
+"common decision order" across independent authorities is an atomic-commit
+problem, so some party must provide the order. N2 lists no role allowed to
+order decisions across scopes.
+*Closes when:* N2 and N5 name a scoped **decision coordinator** role, with
+mandate, keys and epoch fencing. Its liveness rules are stated:
+- A participant may abort unilaterally only before it prepares.
+- After prepare, coordinator failure leaves reservations in `Held`.
+- The rules name who resolves a `Held` reservation, within what bound, under
+  which mandate, and with what evidence retained.
+
+**G3. Distributed commit model before orchestration (N7). Blocks step 3.**
+Step 3 composes a cross-authority checkout, but M6-C6 and M6-C7 model only
+one local journal.
+*Closes when:* a Quint/Lean model of the cross-authority commit is merged.
+It covers coordinator and participant messages, crashes and restarts,
+timeouts, partitions, duplicate and replayed messages, and abort fencing.
+It proves agreement (no two participants decide differently) and the
+`Held` behaviour of G2. Its generated traces are the step-3 conformance
+suite for the Rust and Elixir hosts.
+
+**G4. Refunds, disputes and compensation (N6). Blocks step 3.** N6 cites
+reconciliation and compensation without defining them. ADR 0003 forbids
+unilateral reversal of a completed spend.
+*Closes when:* refund and compensation are specified as **new** dual-signed
+obligations, never as rewrites of committed ones. Dispute entry, evidence
+retention and the adjudicating authority are named for each workflow in G1.
+
+### Authority, trust and privacy
+
+**G5. Authority discovery and trust pinning (N4, N5). Blocks step 2.**
+There is no global registry. The ADRs do not say how a relying instance
+learns which authority orders scope S, or how it pins that authority's
+keys, epochs and successor.
+*Closes when:* a signed, versioned authority descriptor is specified,
+covering scope, keys, epoch, custody profile, successor and fencing policy.
+Relying-party pinning and rotation rules follow ADR 0001: local trust
+policy, no global revocation. Discovery may advertise a descriptor, but
+only the pinned policy confers trust.
+
+**G6. Capability port authentication (N1). Blocks step 1.** N1 says
+calling the host confers no authority, but leaves two questions open: how
+the Rust service authenticates its Elixir caller, and how a biz-kit grant
+maps to a permitted Hawala operation.
+*Closes when:* the local port has mutual authentication, a version
+handshake and per-call grant binding. The service re-verifies every
+participant signature itself and never accepts the host's assertion of
+consent.
+
+**G7. Disclosure model (N6). Blocks step 2.** N6 binds "permitted
+disclosure" into the correlation record, but no model defines it.
+*Closes when:* the specification states, per role (merchant, routing peer,
+coordinator, authority, observer), which fields of terms, receipts and
+status each one may see. Routing and observer peers see no amounts or
+counterparties beyond what routing needs.
+
+### Keys and identity
+
+**G8. Participant keys stay on participant devices (N1, N7). Blocks step 1.**
+The capability host must never hold participant identity, consent or
+transaction-QR keys. Accepted terms and transaction QR are signed on the
+customer's or merchant's own device, in line with biz-kit's rule that no
+server signs in a person's name.
+*Closes when:* N1 and N7 state this. A host-side test refuses any request
+to sign on a participant's behalf. The host's own node and operator keys
+stay distinct from participant keys.
+
+**G9. Signing-domain guard and fixture integrity (ADR 0004 D3). Blocks
+step 1.** The interoperability vectors exist, but three follow-ups remain:
+- **Runtime guard:** nothing yet prevents a biz-kit signer other than
+  envelope signing (device statements, capability documents) from using a
+  key bound to a Hawala identity.
+- **Fixture drift:** the two fixture copies can diverge silently.
+- **Wording:** `0x68` is described as "not a CBOR header". Read as a CBOR
+  initial byte it is a text-string head (major type 3), never a map head
+  (major type 5).
+
+*Closes when:*
+- Binding a key to a Hawala identity excludes it from every non-envelope
+  signer.
+- Both tests pin the fixture's SHA-256.
+- The wording states both readings.
+
+**G10. Exact money encoding (D5.3, N7). Blocks step 4.** N7 requires
+"i64/u64-safe" encodings without choosing one.
+*Closes when:* the specification fixes one encoding for amounts on the wire
+and in the biz-kit ledger. Either amounts are capped at 2^63−1 minor units
+everywhere, or they use decimal strings with a canonical grammar. The
+specification also publishes vectors at both range boundaries.
+
+### Process
+
+**G11. Lockstep text for N1–N7.** The paired N1–N7 texts differ in
+substance. Only hawala-core's N1 rules out a universal operator, a central
+server and a singleton registry. Only hawala-core's N5 requires retaining
+locks and original IDs on `HOLD`.
+*Closes when:* N1–N7 are reconciled into identical normative text, or one
+record becomes normative and the other points to it.
+
 ## Explicit non-goals and compatibility
 
 This proposal does **not** create a network-wide ledger, require every

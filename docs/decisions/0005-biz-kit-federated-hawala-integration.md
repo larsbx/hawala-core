@@ -245,6 +245,11 @@ Relying-party pinning and rotation rules follow ADR 0001: local trust
 policy, no global revocation. Discovery may advertise a descriptor, but
 only the pinned policy confers trust.
 
+*Status:* specified and implemented for scope authorities in hawala-core #47
+(`hawala-authority-descriptor`, `docs/AUTHORITY_DESCRIPTOR.md`). Pinning of
+execution observers, settlement attestors and coordinators, the discovery
+transport, durable pin storage and the biz-kit relying-party side remain open.
+
 **G6. Capability port authentication (N1). Blocks step 1.** N1 says
 calling the host confers no authority, but leaves two questions open: how
 the Rust service authenticates its Elixir caller, and how a biz-kit grant

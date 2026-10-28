@@ -1266,6 +1266,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-remedy"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek 2.2.0",
+ "hawala-identity-core",
+ "hawala-protocol",
+ "sha2 0.10.9",
+]
+
+[[package]]
 name = "hawala-safety"
 version = "0.1.0"
 

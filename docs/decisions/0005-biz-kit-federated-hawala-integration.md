@@ -233,6 +233,14 @@ unilateral reversal of a completed spend.
 obligations, never as rewrites of committed ones. Dispute entry, evidence
 retention and the adjudicating authority are named for each workflow in G1.
 
+*Status:* specified and implemented in hawala-core #52 (`hawala-remedy`,
+`docs/REMEDIES.md`): remedies are new linked dual-signed obligations; consent
+comes from the party whose money moves, or an award from the pinned
+adjudicator, with one award per case; cumulative caps prevent double
+recovery; disputes hold and move nothing; and each G1 workflow has a dispute
+profile. The adjudication service, the finality-policy encoding of the
+adjudicator, and remedy execution remain open.
+
 ### Authority, trust and privacy
 
 **G5. Authority discovery and trust pinning (N4, N5). Blocks step 2.**

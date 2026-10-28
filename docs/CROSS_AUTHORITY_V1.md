@@ -358,3 +358,12 @@ open until formal review and actual host conformance, G4–G8 remain separate,
 G9 retains its existing status, and G10 still needs arithmetic/host refinement.
 G11's identical normative text is reviewable in the paired PRs; it closes only
 when accepted in both. The architecture remains **Proposed**.
+
+## 6. Subsequent TEST-host conformance increment
+
+[Persistent Rust/Elixir TEST-host conformance](CROSS_AUTHORITY_HOST_CONFORMANCE.md)
+adds 232 prefix replays through separate local actor journals and 72
+Lean-generated evidence-shape gates. The prior model-to-model corpus remains
+unchanged. Test adapters do not implement an actual financial writer, wire
+verifier, custody adapter or network service; G3/D5.5 and architecture acceptance
+remain open.

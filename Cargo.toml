@@ -10,5 +10,6 @@ members = [
   "crates/hawala-optical-media-test",
   "crates/hawala-controller-fence",
   "crates/hawala-capability-port",
+  "crates/hawala-cross-authority-test",
 ]
 resolver = "2"

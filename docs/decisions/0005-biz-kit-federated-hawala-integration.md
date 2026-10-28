@@ -213,8 +213,10 @@ mandate, keys and epoch fencing. Its liveness rules are stated:
 **G3. Distributed commit model before orchestration (N7). Blocks step 3.**
 M6-C6 and M6-C7 alone model only one local journal. The new
 `CrossAuthority.lean` / `crossAuthority.qnt` increment models independent
-participants and blocking recovery. Its review and Rust/Elixir host
-conformance remain prerequisites; no synthetic orchestration is supplied.
+participants and blocking recovery. Persistent Rust/Elixir TEST adapters now
+replay the selected formal corpus through separate local journals. Actual
+financial-writer, signed-wire and custody-boundary refinement remains open;
+no synthetic checkout orchestration is supplied.
 *Closes when:* a Quint/Lean model of the cross-authority commit is merged.
 It covers coordinator and participant messages, crashes and restarts,
 timeouts, partitions, duplicate and replayed messages, and abort fencing.

@@ -73,6 +73,22 @@ Golden vectors are in
 Pins are immutable values. `advance` returns a new pin and never changes the
 old one.
 
+## Pinning other evidence issuers
+
+Execution observers and settlement attestors are pinned with the same chain
+and rules. Their descriptor's `scope_id` is the role-specific value
+`H("hawala-role-scope/v1\0" || tag:U8 || leg_scope)`, where the tag is 1
+for an execution observer and 2 for a settlement attestor. Authorities keep
+the leg's own `scope_id`, so manifests and the v1 vectors are unchanged.
+
+`admit_issuer(role, leg_scope, issuer_key, signer_epoch)` checks the issuer
+fields of an evidence header against the current pinned key and epoch of
+that role and leg. One role's pin can never vouch for another role's
+evidence, another leg's, or a manifest leg.
+
+Coordinators are deliberately excluded. Their succession is fixed by the
+recovery mandate (`CROSS_AUTHORITY_V1` §4), not by a descriptor chain.
+
 ## What this does not solve, stated plainly
 
 - **Equivocation:** relying parties that received rival descriptors in

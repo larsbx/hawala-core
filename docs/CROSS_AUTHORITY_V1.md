@@ -18,7 +18,9 @@ chain, finality policy and recovery mandate. The embedded issuer, transport,
 biz-kit log inclusion, ActivityPub discovery and coordinator selection are
 never trust roots. Authority keys, scopes, custody profiles and epoch chains
 are pinned through [authority descriptors](AUTHORITY_DESCRIPTOR.md) (G5).
-Pinning execution observers, settlement attestors and coordinators remains open.
+Execution observers and settlement attestors are pinned the same way, under
+role-specific scopes. Coordinator succession stays governed by the recovery
+mandate below.
 
 `formal/lean/FinancialEvidence.lean` defines the evidence shapes and business
 gates. Cryptographic/mandate/custody/finality verification is an **explicit

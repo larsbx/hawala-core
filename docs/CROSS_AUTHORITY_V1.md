@@ -38,7 +38,8 @@ Preparation abort is legal **only before the terminal commit decision**. There
 is no `Committed → Aborted` or `Executed → Aborted` transition. A dispute or
 unknown execution after commit produces `Held(lastProven, reason)`; refunds,
 replacement payments and compensation are **new**, funded, dual-signed
-obligations linked to the original, never rewritten history (G4 remains open).
+obligations linked to the original, never rewritten history. Their basis,
+caps and per-workflow dispute profile are in [remedies](REMEDIES.md) (G4).
 A settlement receipt is historical evidence: later disputes suspend new actions
 and preserve evidence rather than erase it. `Held` is an overlay, not a
 backward change to the durable terminal decision.

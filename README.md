@@ -167,6 +167,13 @@ the whole manifest, because evidence signs its digest. `project` fails closed
 on unknown fields. See [disclosure](docs/DISCLOSURE.md), including why v1 forces
 leg agents to over-disclose.
 
+The `hawala-remedy` crate makes refunds, replacements and compensation new
+dual-signed obligations linked to the original, never rewrites. Each needs the
+consent of the party whose money moves, or an award from the locally pinned
+adjudicator, with one award per case. Cumulative caps stop the same loss being
+recovered twice. Disputes open a case and move nothing. See
+[remedies](docs/REMEDIES.md).
+
 ## Local development
 
 ```sh

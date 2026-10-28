@@ -1,0 +1,12 @@
+[package]
+name = "hawala-remedy"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Disputes, awards and refunds/replacements/compensation as new linked obligations (no rewrites)"
+
+[dependencies]
+hawala-identity-core = { path = "../identity-core" }
+hawala-protocol = { path = "../hawala-protocol" }
+ed25519-dalek = "2.1"
+sha2 = "0.10"

@@ -33,6 +33,13 @@ impl FinancialPort for Native {
     fn submit_linked(&mut self, plan: &Plan) -> Result<Submission> {
         self.calls += 1;
         if self.reject {
+            if plan
+                .transfers()
+                .iter()
+                .any(|t| self.records.contains_key(&t.id))
+            {
+                return Err(Error::Conflict);
+            }
             return Ok(Submission::Rejected);
         }
         let mut records = Vec::new();
@@ -375,4 +382,142 @@ fn destination_cursor_does_not_advance_over_a_replayed_page() {
     );
     assert_eq!(sink.cursor, 2);
     assert_eq!(sink.groups.len(), 1);
+}
+
+/// Complete-history fixture: raw rows are read in native order and passed
+/// through the real bounded decoder. This fixture supplies the trusted source
+/// completeness/ordering assumption, not a proof of the database's behavior.
+struct HistorySource<'a> {
+    native: &'a Native,
+    requested: usize,
+}
+
+impl CommitSource for HistorySource<'_> {
+    fn read_after(&mut self, timestamp: u64, limit: usize) -> Result<Vec<Confirmed>> {
+        use hawala_tigerbeetle_flow::replay::{Decoder, NativeRecord};
+        let mut rows: Vec<_> = self
+            .native
+            .records
+            .values()
+            .filter(|r| r.timestamp > timestamp)
+            .cloned()
+            .collect();
+        rows.sort_by_key(|r| r.timestamp);
+        let rows: Vec<_> = rows
+            .into_iter()
+            .map(|record| NativeRecord {
+                record,
+                flags: 0,
+                pending_id: 0,
+                timeout: 0,
+            })
+            .collect();
+        let mut decoder = Decoder::new(0, 1, timestamp)?;
+        let groups = decoder.push_page(&rows)?;
+        decoder.finish()?;
+        // An attempted jump cannot be supplied as a complete-prefix source.
+        if let Some(first) = groups.first() {
+            if first.plan().operation() != self.requested as u128 * 100 {
+                return Err(Error::InvalidPage);
+            }
+        }
+        Ok(groups.into_iter().take(limit).collect())
+    }
+}
+
+#[test]
+fn finite_certificate_all_1700_edges_match_record_recovery_decoder_and_persistence() {
+    let mut lines = include_str!("../../../formal/traces/tigerBeetleFirst.tsv").lines();
+    assert_eq!(
+        lines.next().unwrap(),
+        "path\tcommitted\teffects\tsinkA\tsinkB\tacknowledged"
+    );
+    let mut count = 0;
+    for line in lines {
+        let fields: Vec<_> = line.split('\t').collect();
+        assert_eq!(fields.len(), 6);
+        let mut native = Native::default();
+        let mut a = Sink::default();
+        let mut b = Sink::default();
+        let mut acknowledged = 0;
+        for event in fields[0].split(';') {
+            if let Some((tag, args)) = event.strip_suffix(')').and_then(|e| e.split_once('(')) {
+                let args: Vec<_> = args.split(',').collect();
+                let n = args[0].parse::<usize>().unwrap();
+                match tag {
+                    "accept" => {
+                        let committed = native.records.len() / 2;
+                        native.reject = args[1] != "true" || n > committed + 1;
+                        native.lose_reply = true; // Financial commit before the client learns it.
+                        let result = record(&mut native, &plan(n as u128 * 100));
+                        assert!(matches!(
+                            result,
+                            Ok(Decision::Held | Decision::Rejected) | Err(Error::Conflict)
+                        ));
+                        native.reject = false;
+                    }
+                    "persistA" | "persistB" => {
+                        let mut source = HistorySource {
+                            native: &native,
+                            requested: n,
+                        };
+                        let sink = if tag == "persistA" { &mut a } else { &mut b };
+                        match persist_once(&mut source, sink, 0, 1, 1) {
+                            Ok(_) | Err(Error::InvalidPage) => (),
+                            other => panic!("unexpected persistence result {other:?}"),
+                        }
+                    }
+                    "acknowledge" => {
+                        if args[1] == "true" && n <= native.records.len() / 2 {
+                            assert!(matches!(
+                                recover(&mut native, &plan(n as u128 * 100)),
+                                Ok(Decision::Committed(_))
+                            ));
+                            acknowledged = acknowledged.max(n);
+                        }
+                    }
+                    _ => panic!("unknown certificate event {event}"),
+                }
+            } else {
+                assert!(["timeout", "crash", "replay"].contains(&event));
+                // Stateless orchestrators restart against surviving trusted-port
+                // state. Real process/storage crash conformance remains separate.
+            }
+        }
+        let actual = [
+            native.records.len() / 2,
+            native.clock as usize / 2,
+            a.cursor as usize / 2,
+            b.cursor as usize / 2,
+            acknowledged,
+        ];
+        let expected: Vec<usize> = fields[1..].iter().map(|s| s.parse().unwrap()).collect();
+        assert_eq!(
+            actual.as_slice(),
+            expected,
+            "certificate edge {count}: {}",
+            fields[0]
+        );
+        assert_eq!(a.groups.len(), actual[2]);
+        assert_eq!(b.groups.len(), actual[3]);
+        count += 1;
+    }
+    assert_eq!(count, 1700);
+}
+
+#[test]
+fn local_reauthorization_failure_does_not_erase_a_previously_committed_operation() {
+    let p = plan(100);
+    let mut native = Native {
+        lose_reply: true,
+        ..Native::default()
+    };
+    assert_eq!(record(&mut native, &p), Ok(Decision::Held));
+    native.reject = true;
+    assert_eq!(record(&mut native, &p), Err(Error::Conflict));
+    assert!(matches!(
+        recover(&mut native, &p),
+        Ok(Decision::Committed(_))
+    ));
+    assert_eq!(native.records.len(), 2);
 }

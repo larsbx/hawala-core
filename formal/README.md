@@ -1,5 +1,46 @@
 # Proof-driven financial state machine — first verification layer
 
+## TigerBeetle-first increment: acceptance boundary
+
+`TigerBeetleFirst.lean` adds abstract unbounded-source safety statements for
+native commit, original-operation idempotency, commit monotonicity and two
+independent complete-prefix destinations. `ExportTigerBeetleFirst.lean` checks
+a finite 100-state closure certificate and exports its 1700 edges. These are
+new proof sources, **not yet locally kernel-accepted**: the pinned official
+4.28.0 binary failed before elaboration on sandbox process-path access, also
+after a fresh download verified against the release SHA-256. Require hosted
+`lake build` and exact exporter regeneration before claiming Lean acceptance.
+
+Quint 0.32.0/TLC exhausts the separately authored finite model: 100 distinct
+states, 1701 generated states, empty queue. Four unsafe transitions (invented
+mirror progress, duplicate financial effect, forgotten native commit and
+unconfirmed acknowledgement) each produce an actual invariant counterexample.
+The five witnesses and all 1700 finite edges also pass Quint's evaluator.
+
+The committed certificate is independently constructed by
+`tools/generate_tb_first_certificate.py`; Python checks witness paths and finite
+closure, Quint checks every edge, and Rust exercises it through real core
+submission/recovery, raw-record decoding and independent sink draining with
+synthetic trusted ports. CI additionally requires byte-identical Lean exporter
+output. This finite correspondence is not a universal implementation refinement.
+
+Assumptions remain explicit: native commit atomicity/durability, immutable
+operation/body binding, trusted gateway authorization/fencing, complete native
+history coverage and atomic destination bundle/receipt/cursor persistence.
+The model's prefix numbering abstracts native timestamps; timestamps are not
+dense sequence numbers. An attempted source gap is refused by the trusted
+history fixture, not inferred absent from a timestamp inequality. Real SDK,
+cryptographic business admission, database crash/fencing conformance and external
+execution/settlement remain outside this increment. The existing verified
+layers below retain their original statements and acceptance evidence.
+
+Reproduce this increment with `bash tools/check_tb_first_quint.sh`,
+`cargo test -p hawala-tigerbeetle-flow --locked`, and
+`python3 tools/check_tb_first_mutations.py`. The Lean lane builds the new library
+and regenerates both certificate files through `check_trace_artifacts.sh`.
+
+## Earlier accepted layers
+
 This layer specifies the merged TEST authority before adding reconciliation,
 adjudication or release behavior. A Rust change that alters admission, claiming,
 holds or recovery must first update this specification, prove its invariants,

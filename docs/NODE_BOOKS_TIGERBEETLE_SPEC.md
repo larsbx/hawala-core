@@ -193,12 +193,20 @@ their existing coordinator/recovery contracts.
 
 [`hawala-tigerbeetle-flow`](../crates/hawala-tigerbeetle-flow/src/lib.rs) contains
 transport-independent `record`, `recover` and `persist_once` operations.
+Its `replay::HistorySource` implements `CommitSource` over a trusted native
+read port, with bounded complete-group decoding and destination-cursor restart.
+No SDK-specific reader or real durable database sink is connected yet.
 Financial submission has no sink argument. Trusted FinancialPort, CommitSource
 and DurableSink contracts make native authentication/fencing, source completeness
 and destination atomic durability explicit. Structural validation does not
 establish those trust properties. Tests use synthetic native and sink ports;
 they are not real TB, PostgreSQL or signed EventStore tests and are not a
-Lean/Quint financial-storage refinement.
+Lean/Quint financial-storage refinement. The added abstract Lean sources and
+exporter still require pinned Lean compilation: local startup failed before
+elaboration on sandbox process-path access. Quint/TLC exhausts the separate
+100-state projection; 1700 certificate edges match Quint and the Rust port
+harness. The independently constructed certificate must be reproduced by Lean
+in CI before any Lean-generated or kernel-checked certificate claim.
 
 Required before runtime integration: pin native SDK/server/deployment versions;
 implement and test the scoped gateway and guard/account compiler; define complete

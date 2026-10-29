@@ -38,3 +38,8 @@ lake env lean --run ExportEndpointOrchestration.lean > "$trace_tmp/lifecycle.tsv
 diff -u ../traces/endpointOrchestration.tsv "$trace_tmp/lifecycle.tsv"
 lake env lean --run ExportEndpointOrchestration.lean quint > "$trace_tmp/conformance.qnt"
 diff -u ../quint/endpointOrchestrationConformance.qnt "$trace_tmp/conformance.qnt"
+
+lake env lean --run ExportTigerBeetleFirst.lean > "$trace_tmp/lifecycle.tsv"
+diff -u ../traces/tigerBeetleFirst.tsv "$trace_tmp/lifecycle.tsv"
+lake env lean --run ExportTigerBeetleFirst.lean quint > "$trace_tmp/conformance.qnt"
+diff -u ../quint/tigerBeetleFirstConformance.qnt "$trace_tmp/conformance.qnt"

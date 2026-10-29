@@ -1,6 +1,6 @@
 name = "hawalaFormal"
 version = "0.1.0"
-defaultTargets = ["Hawala", "Observations", "Coordination", "CoordinatedAdmission", "TestExecution", "CrossAuthority", "FinancialEvidence", "EndpointOrchestration"]
+defaultTargets = ["Hawala", "Observations", "Coordination", "CoordinatedAdmission", "TestExecution", "CrossAuthority", "FinancialEvidence", "EndpointOrchestration", "TigerBeetleFirst"]
 
 [[lean_lib]]
 name = "Hawala"
@@ -25,3 +25,6 @@ name = "FinancialEvidence"
 
 [[lean_lib]]
 name = "EndpointOrchestration"
+
+[[lean_lib]]
+name = "TigerBeetleFirst"

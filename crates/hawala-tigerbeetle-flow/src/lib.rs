@@ -6,6 +6,8 @@
 //! supplied `Plan` is not evidence of consent or permission to submit it.
 use std::collections::BTreeSet;
 
+pub mod replay;
+
 pub const MAX_LEGS: usize = 255;
 pub const MAX_AMOUNT: u128 = i64::MAX as u128;
 
@@ -166,7 +168,9 @@ impl Confirmed {
 pub enum Submission {
     /// Actual accepted records, normalized to input order by the trusted port.
     Accepted(Vec<RecordedTransfer>),
-    /// Proven no financial effect for this complete chain. Never a timeout.
+    /// Proven no financial effect for this original operation, including any
+    /// earlier uncertain submission. Never a timeout or merely a failed local
+    /// reauthorization of an operation that might already be committed.
     Rejected,
     /// Lost reply, interrupted session, or otherwise unresolved outcome.
     Unknown,

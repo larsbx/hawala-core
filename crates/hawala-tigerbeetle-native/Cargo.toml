@@ -1,0 +1,21 @@
+[package]
+name = "hawala-tigerbeetle-native"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Opt-in native TigerBeetle conformance adapter; no production writer"
+
+[features]
+default = []
+native-conformance = ["dep:tigerbeetle", "dep:futures"]
+
+[dependencies]
+hawala-tigerbeetle-flow = { path = "../hawala-tigerbeetle-flow" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+ed25519-dalek = "2.2"
+sha2 = "0.10"
+tigerbeetle = { version = "=0.17.9", optional = true }
+futures = { version = "0.3", optional = true, features = ["executor"] }
+
+[dev-dependencies]
+tempfile = "3"

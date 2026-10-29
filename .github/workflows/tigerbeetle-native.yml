@@ -1,0 +1,30 @@
+name: Native TigerBeetle durable outcome conformance
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  native-storage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install exact native service
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 https://github.com/tigerbeetle/tigerbeetle/releases/download/0.17.9/tigerbeetle-x86_64-linux.zip -o /tmp/tigerbeetle.zip
+          echo 'af71f2c0057e3b409bf79940fa94894b738187b0d4f1e711097bca15df5d8cd4  /tmp/tigerbeetle.zip' | sha256sum --check
+          mkdir /tmp/hawala-native-tb
+          unzip /tmp/tigerbeetle.zip -d /tmp/hawala-native-tb
+          /tmp/hawala-native-tb/tigerbeetle version
+      - name: Check adapter and actual durable destinations
+        run: |
+          cargo test -p hawala-tigerbeetle-flow -p hawala-tigerbeetle-native --features native-conformance --locked
+          cargo clippy -p hawala-tigerbeetle-native --features native-conformance --all-targets --locked -- -D warnings
+          python3 tools/check_tb_storage_mutations.py
+      - name: Require real service recovery and failure matrix (no service skips)
+        env:
+          TB_BINARY: /tmp/hawala-native-tb/tigerbeetle
+        run: timeout 180s cargo test -p hawala-tigerbeetle-native --features native-conformance --locked --test native -- --ignored --skip native_worker --nocapture --test-threads=1

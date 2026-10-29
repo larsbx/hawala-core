@@ -229,3 +229,21 @@ the complete financial authority/evidence protocol proposed above.
 - [T4 Reliable submission](https://docs.tigerbeetle.com/coding/reliable-transaction-submission/)
 - [T5 System architecture](https://docs.tigerbeetle.com/coding/system-architecture/)
 - [T6 Recovery](https://docs.tigerbeetle.com/operating/recovering/)
+
+
+## Native storage conformance follow-up (TEST only)
+
+The opt-in `hawala-tigerbeetle-native` crate implements the official pinned
+TigerBeetle SDK financial/history ports and a signed independent durable SQLite
+outcome archive. See its [implementation and acceptance limits](../crates/hawala-tigerbeetle-native/README.md).
+This increment reconciles #50's registry bytes and posting pairings with TB-first
+operation anchors; it does not import #50's SQL-first checkpoint authority.
+
+Correction: the pinned 0.17.9 implementation stores transfer flags verbatim.
+The native adapter checks expected linked flags before normalizing the core
+posted profile. Explicit operation/count/index metadata remains required.
+Signed original evidence authenticates bodies; native history completeness still
+trusts the isolated local server/SDK boundary. No production authenticated
+transport, effective fencing or actual biz-kit EventStore writer is enabled.
+Eight local tests and four unsafe Rust controls pass; native server execution and
+Lean kernel acceptance remain blocked locally and required in exact-head CI.

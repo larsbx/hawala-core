@@ -6,20 +6,42 @@ use crate::{
 };
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use hawala_tigerbeetle_flow::{Confirmed, DurableSink, Error, Plan, Result};
-use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBehavior};
 use std::{path::Path, time::Duration};
 
 fn database(path: &Path) -> Result<Connection> {
-    if path.as_os_str() == ":memory:" {
+    // SQLite accepts an empty filename as a delete-on-close temporary database.
+    // URI filenames can also select memory or non-durable VFS modes. This port
+    // promises a durable filesystem destination, so neither is a valid profile.
+    if path.as_os_str().is_empty()
+        || path.as_os_str() == ":memory:"
+        || path.to_str().is_some_and(|name| name.starts_with("file:"))
+    {
         return Err(Error::Port);
     }
-    let db = Connection::open(path).map_err(|_| Error::Port)?;
+    let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+        | OpenFlags::SQLITE_OPEN_CREATE
+        | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    let db = Connection::open_with_flags(path, flags).map_err(|_| Error::Port)?;
     db.busy_timeout(Duration::from_millis(50))
         .map_err(|_| Error::Port)?;
-    db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")
+    let mode: String = db
+        .query_row("PRAGMA journal_mode=WAL", [], |row| row.get(0))
         .map_err(|_| Error::Port)?;
+    db.execute_batch("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")
+        .map_err(|_| Error::Port)?;
+    let synchronous: i64 = db
+        .query_row("PRAGMA synchronous", [], |row| row.get(0))
+        .map_err(|_| Error::Port)?;
+    let foreign_keys: i64 = db
+        .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
+        .map_err(|_| Error::Port)?;
+    if mode != "wal" || synchronous != 2 || foreign_keys != 1 {
+        return Err(Error::Port);
+    }
     Ok(db)
 }
+
 fn context(
     registry: &Registry,
     cluster: u128,

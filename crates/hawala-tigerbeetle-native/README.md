@@ -122,3 +122,11 @@ Official references (version-specific source is authoritative for this adapter):
 - https://github.com/tigerbeetle/tigerbeetle/blob/0.17.9/src/state_machine.zig
 - https://docs.tigerbeetle.com/reference/requests/create_transfers/
 - https://docs.tigerbeetle.com/reference/requests/query_transfers/
+
+
+Durable constructors require an explicit filesystem filename, reject temporary,
+memory and SQLite URI profiles, and verify the effective WAL, FULL synchronous
+and foreign-key settings. Merely executing a PRAGMA request is insufficient:
+SQLite may return another journal mode without an SQL error. This checks the
+storage configuration assumed by the abstract model; filesystem/fsync honesty
+and external anti-rollback anchoring remain separate assumptions.

@@ -76,12 +76,12 @@ theorem sink_failure_cannot_undo_commit (s : State) :
 
 theorem sinkA_independent_of_sinkB (s : State) (n : Nat) :
     (step s (.persistA n)).sinkB = s.sinkB := by
-  unfold step
+  simp only [step]
   split <;> rfl
 
 theorem sinkB_independent_of_sinkA (s : State) (n : Nat) :
     (step s (.persistB n)).sinkA = s.sinkA := by
-  unfold step
+  simp only [step]
   split <;> rfl
 
 theorem no_sink_gap (s : State) (n : Nat) (h : n ≠ s.sinkA + 1) :

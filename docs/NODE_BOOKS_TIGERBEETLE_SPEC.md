@@ -1,8 +1,8 @@
 # Node-owned books: TigerBeetle first, persistence afterward
 
-Selected architecture: 2026-10-28. Implementation status: **port-level core and
-synthetic conformance tests; native financial writer and durable sink adapters
-not implemented or enabled**. This replaces the PostgreSQL-first proposal in
+Selected architecture: 2026-10-28. Implementation status: **port-level core plus an opt-in native TEST adapter
+and durable signed SQLite archive; native-service and Lean acceptance pending,
+production financial writers not enabled**. This replaces the PostgreSQL-first proposal in
 [the historical profile](NODE_BOOKS_POSTGRES_FIRST_ARCHIVED.md). Existing SQLite
 simulators, production gates and financial authorities are unchanged.
 
@@ -111,9 +111,9 @@ Every native transfer retains:
 | `user_data_32` | `total_transfer_count * 65536 + zero_based_index` |
 | Account IDs, ledger, code and amount | Complete native accounting consequences under the pinned immutable registry |
 
-Set `linked` on every transfer except the last. TigerBeetle does not retain
-the linked flag, so the persistent group/count/index binding is essential for
-recovery. The operation's first-transfer anchor MUST be in every retry chain;
+Set `linked` on every transfer except the last. The pinned 0.17.9 source
+stores the raw flags: verify their expected positions before normalization.
+Persistent group/count/index binding remains essential for recovery. The operation's first-transfer anchor MUST be in every retry chain;
 `user_data_128` is not a unique constraint. Never mix unrelated operations into
 one group, reuse an ID for a changed body, or treat an RPC batch as atomic
 without linking its transfers.
@@ -135,7 +135,7 @@ an outcome: every unique index in `0..count`, identical group/epoch context,
 exact registry-bound native payloads and strictly increasing native timestamps.
 Never advance a consumer past a partial group. The trusted source MUST provide
 complete native-history coverage, not silently skip unknown or missing groups.
-Linked-chain membership cannot be inferred from a flag that was not retained.
+Do not infer complete linked-chain membership from one flag or one record.
 
 Every destination has an independent cursor keyed by destination, cluster and
 generation. In one destination transaction, persist the complete derived bundle,
@@ -195,12 +195,15 @@ their existing coordinator/recovery contracts.
 transport-independent `record`, `recover` and `persist_once` operations.
 Its `replay::HistorySource` implements `CommitSource` over a trusted native
 read port, with bounded complete-group decoding and destination-cursor restart.
-No SDK-specific reader or real durable database sink is connected yet.
+The opt-in native TEST crate now supplies a pinned SDK financial/history adapter
+and independently durable signed SQLite archive. Its real-service matrix is not
+yet accepted; it is not connected to a production gateway or biz-kit EventStore.
 Financial submission has no sink argument. Trusted FinancialPort, CommitSource
 and DurableSink contracts make native authentication/fencing, source completeness
 and destination atomic durability explicit. Structural validation does not
-establish those trust properties. Tests use synthetic native and sink ports;
-they are not real TB, PostgreSQL or signed EventStore tests and are not a
+establish those trust properties. The core tests use synthetic native and sink ports. The new storage crate also
+executes actual SQLite crash/durability tests; its real TB service matrix compiles
+but is blocked locally by denied io_uring. Neither suite is a concrete
 Lean/Quint financial-storage refinement. The added abstract Lean sources and
 exporter still require pinned Lean compilation: local startup failed before
 elaboration on sandbox process-path access. Quint/TLC exhausts the separate
@@ -208,10 +211,10 @@ elaboration on sandbox process-path access. Quint/TLC exhausts the separate
 harness. The independently constructed certificate must be reproduced by Lean
 in CI before any Lean-generated or kernel-checked certificate claim.
 
-Required before runtime integration: pin native SDK/server/deployment versions;
-implement and test the scoped gateway and guard/account compiler; define complete
-evidence retention and immutable registry bytes; adapt real native outcomes and
-source replay; implement real durable sinks and signed outcome admission; test
+Required before production integration: accept the pinned native service matrix;
+implement and test the scoped gateway and spend-critical guard compiler; establish
+authenticated complete source history, cross-writer ID allocation and retained
+production consent; connect actual signed EventStore outcome admission; test
 concurrent nonce/lot use, lost replies, all commit/ACK crash boundaries, same-ID
 changed-body refusal, partial CDC groups, cursor races, generation changes and
 effective stale-writer fencing. Extend generated-trace/formal refinement for

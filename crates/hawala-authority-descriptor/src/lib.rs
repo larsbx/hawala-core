@@ -44,10 +44,34 @@ pub enum Error {
     },
     WrongEpoch,
     WrongAuthority,
+    WrongIssuer,
     CustodyProfileMismatch,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+/// Roles whose keys relying parties pin through descriptor chains.
+/// Coordinators are not listed: their succession is governed by the recovery
+/// mandate in `CROSS_AUTHORITY_V1`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Role {
+    Authority,
+    ExecutionObserver,
+    SettlementAttestor,
+}
+
+/// The descriptor scope for `role` on one manifest leg. Authorities use the
+/// leg's own `scope_id`; other roles use
+/// `H("hawala-role-scope/v1\0" || tag:U8 || leg_scope)`, so no role's chain
+/// can stand in for another's.
+pub fn role_scope_id(role: Role, leg_scope: [u8; 32]) -> [u8; 32] {
+    let tag = match role {
+        Role::Authority => return leg_scope,
+        Role::ExecutionObserver => 1u8,
+        Role::SettlementAttestor => 2,
+    };
+    Sha256::digest([b"hawala-role-scope/v1\0".as_slice(), &[tag], &leg_scope].concat()).into()
+}
 
 /// Commitment to a successor key: `H(key)`.
 pub fn key_commitment(key: &IdentityId) -> [u8; 32] {
@@ -260,6 +284,28 @@ impl Pin {
             chain: [self.chain.as_slice(), &[presented]].concat(),
             current: signed.descriptor,
         })
+    }
+
+    /// Admit an evidence issuer: the `issuer_key` and `signer_epoch` of an
+    /// evidence header, for `role` on the leg with `leg_scope`. Only the exact
+    /// current key and epoch of this role's pin qualify.
+    pub fn admit_issuer(
+        &self,
+        role: Role,
+        leg_scope: [u8; 32],
+        issuer: &IdentityId,
+        signer_epoch: u64,
+    ) -> Result<()> {
+        if self.current.scope_id != role_scope_id(role, leg_scope) {
+            return Err(Error::WrongScope);
+        }
+        if signer_epoch != self.current.authority_epoch {
+            return Err(Error::WrongEpoch);
+        }
+        if *issuer != self.current.authority_key {
+            return Err(Error::WrongIssuer);
+        }
+        Ok(())
     }
 
     /// A manifest leg is admissible only for the exact current pinned epoch.

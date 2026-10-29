@@ -112,7 +112,8 @@ impl Plan {
     }
 
     /// Exactly one complete chain. The adapter must not split it into requests.
-    /// TigerBeetle does not retain `linked`; group/count/index survive in data.
+    /// Group/count/index survive in data. SDK adapters must verify the pinned
+    /// version's raw linked flags before normalizing its native record mode.
     pub fn linked_transfers(&self) -> impl Iterator<Item = (&Transfer, bool)> {
         self.transfers
             .iter()

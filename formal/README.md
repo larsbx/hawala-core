@@ -290,3 +290,17 @@ finite conformance are not universal Rust refinement or proof of signature
 soundness, real custody, an honest unique external authority or physical delivery.
 The [terminal authority contract](../docs/M6_C8_TEST_TERMINAL_AUTHORITY.md) states
 the persistence, epoch and authority assumptions and the remaining live gates.
+
+
+### Native storage transaction projection
+
+`lean/TigerBeetleStorage.lean` and `quint/tigerBeetleStorage.qnt` model original-body
+submission, volatile transaction staging, atomic signed-row/cursor commit, crash
+rollback, lost replies and independent destinations. The finite model has 18
+states; `tools/check_tb_storage_quint.sh` exhausts them and requires invariant
+counterexamples for split cursor/bundle and repeated financial effect mutations.
+The predicates abstract signature/context/body/complete-prefix verification.
+They do not establish authenticated transport, SDK/SQLite refinement or production
+writer fencing. Local Lean startup remains blocked before elaboration; require
+the pinned hosted kernel check. Actual storage tests live in the opt-in native
+crate and have a mandatory service workflow; compile-only is not acceptance.

@@ -338,3 +338,39 @@ fn sql_crash_worker() {
     .unwrap();
     std::process::exit(23);
 }
+
+
+#[test]
+fn durable_ports_reject_temporary_memory_and_uri_profiles() {
+    use std::path::Path;
+    let d = tempdir().unwrap();
+    let ev = d.path().join("evidence.sqlite");
+    for name in [
+        "",
+        ":memory:",
+        "file::memory:?cache=shared",
+        "file:hawala-volatile?mode=memory&cache=shared",
+        "file:hawala-unsafe.sqlite?vfs=unix-none",
+    ] {
+        assert!(matches!(
+            EvidenceStore::open(Path::new(name), registry(), CLUSTER, 1, key().verifying_key()),
+            Err(Error::Port)
+        ));
+        assert!(matches!(
+            SignedSink::open(
+                Path::new(name),
+                evidence(&ev),
+                [10; 32],
+                ed25519_dalek::SigningKey::from_bytes(&[10; 32])
+            ),
+            Err(Error::Port)
+        ));
+    }
+    let p = plan(100);
+    retain(&mut evidence(&ev), &p);
+    let archive = d.path().join("archive.sqlite");
+    let mut destination = sink(&archive, &ev, 10);
+    destination.commit(0, &group(&p, 1000)).unwrap();
+    drop(destination);
+    assert_eq!(sink(&archive, &ev, 10).audit().unwrap(), 1);
+}

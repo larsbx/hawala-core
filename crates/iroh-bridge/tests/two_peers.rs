@@ -5,7 +5,7 @@ use std::time::Duration;
 use ed25519_dalek::SigningKey;
 use hawala_identity_core::{IdentityId, ReplayGuard};
 use hawala_iroh_bridge::{handshake, IDENTITY_ALPN};
-use iroh::{endpoint::presets, Endpoint};
+use iroh::{endpoint::presets, Endpoint, EndpointAddr};
 
 fn key(b: u8) -> SigningKey { SigningKey::from_bytes(&[b; 32]) }
 fn id(b: u8) -> IdentityId { IdentityId::from_signing_key(&key(b)) }
@@ -23,10 +23,14 @@ impl ReplayGuard for NonceGuard {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn live_two_peer_iroh_handshake_binds_qr_identity_to_transport() {
     let alice = Endpoint::builder(presets::Minimal)
-        .alpns(vec![IDENTITY_ALPN.to_vec()]).bind().await.unwrap();
+        .alpns(vec![IDENTITY_ALPN.to_vec()])
+        .bind_addr("127.0.0.1:0").unwrap().bind().await.unwrap();
     let bob = Endpoint::builder(presets::Minimal)
-        .alpns(vec![IDENTITY_ALPN.to_vec()]).bind().await.unwrap();
-    let bob_addr = bob.addr();
+        .alpns(vec![IDENTITY_ALPN.to_vec()])
+        .bind_addr("127.0.0.1:0").unwrap().bind().await.unwrap();
+    // This is a local transport/authentication test, not a discovery or relay
+    // availability test. Supply the actual bound loopback socket explicitly.
+    let bob_addr = EndpointAddr::new(bob.id()).with_ip_addr(bob.bound_sockets()[0]);
     let nonce_alice = NonceGuard::default();
     let nonce_bob = NonceGuard::default();
     let output = tokio::time::timeout(Duration::from_secs(30), async {

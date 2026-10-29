@@ -14,5 +14,7 @@ members = [
   "crates/hawala-disclosure",
   "crates/hawala-remedy",
   "crates/hawala-cross-authority-test",
+  "crates/hawala-tigerbeetle-flow",
+  "crates/hawala-tigerbeetle-native",
 ]
 resolver = "2"

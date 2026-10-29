@@ -219,12 +219,14 @@ safety and exhaustively checks a finite instance with a duplicate-claim negative
 control. Its CI gates precede further financial state-machine changes; the
 model-to-Rust correspondence and remaining refinement obligations are explicit.
 
-The proposed [node-owned books and distributed TigerBeetle profile](docs/NODE_BOOKS_TIGERBEETLE_SPEC.md)
-specifies a canonical signed history and PostgreSQL financial commit per
-installation, with a deterministically compiled and verified TigerBeetle
-accounting copy. Replication stays within each authority domain; independent
-authorities coordinate through Hawala. This is an implementation specification,
-not an implemented adapter or a change to the existing single-commit gates.
+The selected [node-owned books profile](docs/NODE_BOOKS_TIGERBEETLE_SPEC.md)
+records financial operations in TigerBeetle first, then persists confirmed
+outcomes to signed EventStore history, PostgreSQL projections and other sinks.
+The `hawala-tigerbeetle-flow` core implements submission/recovery and independent
+persistence ports with synthetic tests. Native database adapters are not yet
+implemented or activated. Replication stays within each authority domain;
+independent authorities coordinate through Hawala. The superseded PostgreSQL-first
+proposal is retained explicitly as historical material.
 
 The [bilateral coordination and resolution contract](docs/M6_C6_COORDINATION.md)
 adds an isolated durable test journal for two synthetic reservations and one

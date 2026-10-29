@@ -1280,6 +1280,23 @@ name = "hawala-safety"
 version = "0.1.0"
 
 [[package]]
+name = "hawala-tigerbeetle-flow"
+version = "0.1.0"
+
+[[package]]
+name = "hawala-tigerbeetle-native"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek 2.2.0",
+ "futures",
+ "hawala-tigerbeetle-flow",
+ "rusqlite",
+ "sha2 0.10.9",
+ "tempfile",
+ "tigerbeetle",
+]
+
+[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3375,6 +3392,12 @@ checksum = "1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "tigerbeetle"
+version = "0.17.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b552c5f9966fd12c9e6f0ab6cad178c2430b0a5e3909e1f5953fe8d0d457f90d"
 
 [[package]]
 name = "time"

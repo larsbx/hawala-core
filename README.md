@@ -180,6 +180,15 @@ recovered twice. Disputes open a case and move nothing. See
 cargo test --workspace --all-targets
 ```
 
+## Storage responsibilities
+
+[ADR 0007](docs/decisions/0007-storage-roles-postgres-event-log-redis.md)
+records TigerBeetle financial commit, subsequent signed business history and
+Redis operational delivery/views. Biz-kit's EventStore already uses PostgreSQL;
+replacing that library is staged behind compatibility and recovery gates.
+Hawala's core ports and non-biz-kit peers require neither PostgreSQL nor Redis.
+This architecture record does not activate production execution.
+
 ## Architectural direction
 
 ```text
@@ -254,4 +263,3 @@ cameras treated as untrusted receivers. Existing `hawala:auth:v1:` references
 still require a live authenticated Iroh session. The lab requires prior synthetic
 M6-C7 commitment for export, permanently consumes holder responses as held
 evidence, and cannot authorize hardware, cash delivery, retry or financial release.
-

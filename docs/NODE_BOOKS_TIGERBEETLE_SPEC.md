@@ -6,6 +6,13 @@ production financial writers not enabled**. This replaces the PostgreSQL-first p
 [the historical profile](NODE_BOOKS_POSTGRES_FIRST_ARCHIVED.md). Existing SQLite
 simulators, production gates and financial authorities are unchanged.
 
+Storage-boundary update, 2026-10-30:
+[ADR 0007](decisions/0007-storage-roles-postgres-event-log-redis.md)
+specifies the biz-kit host's staged PostgreSQL event-log adapter and Redis
+operational layer. EventStore references below describe the active host
+implementation and its existing acceptance scope. Replacement remains gated;
+financial commit order, evidence retention and non-biz-kit ports are unchanged.
+
 ## 1. One financial record, then downstream persistence
 
 **Record the financial operation securely in TigerBeetle once. Its accepted

@@ -174,6 +174,8 @@ adjudicator, with one award per case. Cumulative caps stop the same loss being
 recovered twice. Disputes open a case and move nothing. See
 [remedies](docs/REMEDIES.md).
 
+Bank predicate evidence is a **TEST-only attestor admission reference** (not a bank API, zero-knowledge proof, or financial settlement authority); see [BANK_EVIDENCE_V1](docs/BANK_EVIDENCE_V1.md).
+
 ## Local development
 
 ```sh

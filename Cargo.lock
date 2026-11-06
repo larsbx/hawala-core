@@ -1188,7 +1188,9 @@ dependencies = [
  "getrandom 0.3.4",
  "hawala-identity-core",
  "iroh",
+ "tempfile",
  "tokio",
+ "tokio-rustls",
 ]
 
 [[package]]

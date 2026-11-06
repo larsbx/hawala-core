@@ -641,3 +641,6 @@ mod terminal;
 
 #[path="support/observation_conformance.rs"]
 mod observation_conformance;
+
+#[path = "support/transport_recovery.rs"]
+mod transport_recovery;

@@ -1,0 +1,38 @@
+name: Iroh transport regression checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  local-relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Fetch the pinned relay release and verify its archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --location --retry 3 \
+            https://github.com/n0-computer/iroh/releases/download/v1.4.1/iroh-relay-v1.4.1-x86_64-unknown-linux-gnu.tar.gz \
+            -o "$RUNNER_TEMP/iroh-relay.tar.gz"
+          echo "eeceef0f06f04ad2644644cd80dd5733e64da46daf8a9f86d87a5ad5c13b06e4  $RUNNER_TEMP/iroh-relay.tar.gz" | sha256sum --check
+          mkdir "$RUNNER_TEMP/iroh-relay"
+          tar --no-same-owner -xzf "$RUNNER_TEMP/iroh-relay.tar.gz" -C "$RUNNER_TEMP/iroh-relay"
+          relay_bin=$(find "$RUNNER_TEMP/iroh-relay" -type f -name iroh-relay)
+          test -n "$relay_bin"
+          "$relay_bin" --version
+          echo "HAWALA_TEST_RELAY_BIN=$relay_bin" >> "$GITHUB_ENV"
+      - name: Exercise trusted and untrusted TLS, relay admission, and relay loss
+        run: cargo test -p hawala-iroh-bridge --locked --features relay-conformance --test relay_conformance -- --test-threads=1
+      - name: Exercise endpoint and QR binding on direct connections
+        run: cargo test -p hawala-iroh-bridge --locked --test transport_regressions
+      - name: Exercise lost acknowledgment and durable report replay
+        run: |
+          cargo test -p hawala-commit-sim --locked --test atomic transport_recovery::

@@ -47,6 +47,11 @@ through the ALPN, exchanges all frames, and checks both authenticated
 identity-to-EndpointId bindings. No hosted network, relay guarantee,
 and no physical or financial transfer is involved.
 
+The [transport regression gate](IROH_TRANSPORT_REGRESSIONS.md) adds live
+endpoint-key, ALPN, QR expectation and reconnect refusal checks, an offload
+comparison, a local HTTPS relay suite and durable recovery after a lost report
+acknowledgment. The relay suite requires its explicit feature and executable.
+
 ## Remaining security gates
 
 1. An optional SQLite guard makes nonce consumption durable **only within
@@ -63,7 +68,9 @@ and no physical or financial transfer is involved.
    reputation or an obligation's acceptance.
 6. No 0-RTT financial operations. Never put customer financial records on
    public gossip, and use separate domain-separated financial authorizations.
-7. More adversarial network-level tests needed: wrong scanner expectation,
-   reordered streams, partition, reconnect, relay failure and identity swap.
+7. Deployment acceptance still requires cellular/CGNAT, interface changes,
+   discovery and relay capacity checks. Reordered-stream tests also remain.
+   Controlled local refusal, reconnect and relay-loss cases are covered by
+   the transport regression gate above.
 8. Endpoint addressing/discovery must not depend on phone number, username
    or account number for participant identification.

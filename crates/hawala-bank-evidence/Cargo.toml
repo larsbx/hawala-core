@@ -1,0 +1,10 @@
+[package]
+name = "hawala-bank-evidence"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "TEST-only, source-attributed private banking predicate evidence boundary; not ZK or financial authority"
+
+[dependencies]
+ed25519-dalek = "2.1"
+sha2 = "0.10"

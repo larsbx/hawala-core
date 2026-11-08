@@ -41,5 +41,6 @@ jobs:
           bash tools/check_test_execution.sh
           bash tools/check_cross_authority.sh
           bash tools/check_endpoint_orchestration.sh
+          bash tools/check_transport_fault_fence.sh
           bash tools/check_tb_first_quint.sh
           bash tools/check_tb_storage_quint.sh

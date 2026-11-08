@@ -9,6 +9,16 @@ permissions:
   contents: read
 
 jobs:
+  pilot-evidence-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pilot metadata rejects unsafe or fabricated completion flags
+        run: python3 -m unittest discover -s tools/tests -p 'test_iroh_pilot_acceptance.py' -v
+      - name: Assert all environment-specific pilot observations remain pending
+        run: |
+          python3 tools/iroh_pilot_acceptance.py tools/fixtures/iroh_pilot_pending.json > "$RUNNER_TEMP/pilot.json"
+          python3 -c 'import json,sys; x=json.load(open(sys.argv[1])); assert x["status"]=="pending" and len(x["missing"])==10 and not x["source_authenticated"]' "$RUNNER_TEMP/pilot.json"
   local-relay:
     runs-on: ubuntu-latest
     timeout-minutes: 20

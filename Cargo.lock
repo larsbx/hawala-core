@@ -1060,6 +1060,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-bank-evidence"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek 2.2.0",
+ "sha2 0.10.9",
+]
+
+[[package]]
 name = "hawala-capability-port"
 version = "0.1.0"
 dependencies = [

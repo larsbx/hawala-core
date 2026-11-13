@@ -1,0 +1,9 @@
+[package]
+name = "hawala-bank-sandbox"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Local-only synthetic Plaid/Teller sandbox balance adapter, no bank authority or ZK"
+
+[dependencies]
+serde_json = { version = "1", features = ["arbitrary_precision"] }

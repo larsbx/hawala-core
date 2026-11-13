@@ -1060,6 +1060,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-bank-sandbox"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "hawala-capability-port"
 version = "0.1.0"
 dependencies = [

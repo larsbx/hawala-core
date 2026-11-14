@@ -174,7 +174,7 @@ adjudicator, with one award per case. Cumulative caps stop the same loss being
 recovered twice. Disputes open a case and move nothing. See
 [remedies](docs/REMEDIES.md).
 
-An [offline Plaid/Teller private sandbox adapter](docs/BANK_SANDBOX_V1.md) now demonstrates **unverified local** balance-threshold parsing; not zero-knowledge or bank provenance.
+The [private Plaid/Teller sandbox connector](docs/BANK_SANDBOX_V1.md) exposes an **unverified sandbox** balance predicate for one authorized account and threshold.
 
 ## Local development
 

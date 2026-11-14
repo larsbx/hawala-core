@@ -3,7 +3,18 @@ name = "hawala-bank-sandbox"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-description = "Local-only synthetic Plaid/Teller sandbox balance adapter, no bank authority or ZK"
+description = "Private-node Plaid and Teller sandbox balance predicates"
+
+[features]
+private-http = ["dep:base64", "dep:bytes", "dep:reqwest", "dep:rustls", "dep:tokio", "dep:webpki-roots"]
 
 [dependencies]
-serde_json = { version = "1", features = ["arbitrary_precision"] }
+base64 = { version = "0.22", optional = true }
+bytes = { version = "1", optional = true }
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider"], optional = true }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"], optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time"], optional = true }
+webpki-roots = { version = "1", optional = true }
+zeroize = "1"

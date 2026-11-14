@@ -13,6 +13,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --workspace --all-targets
 
+      - name: Private sandbox HTTPS adapter with synthetic fixtures
+        run: cargo test -p hawala-bank-sandbox --features private-http --locked
+
       - name: TigerBeetle-first port core has no compiler warnings
         run: cargo clippy -p hawala-tigerbeetle-flow --all-targets --locked -- -D warnings
 

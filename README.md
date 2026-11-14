@@ -174,6 +174,8 @@ adjudicator, with one award per case. Cumulative caps stop the same loss being
 recovered twice. Disputes open a case and move nothing. See
 [remedies](docs/REMEDIES.md).
 
+The [private Plaid/Teller sandbox connector](docs/BANK_SANDBOX_V1.md) exposes an **unverified sandbox** balance predicate for one authorized account and threshold.
+
 ## Local development
 
 ```sh

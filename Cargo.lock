@@ -1060,6 +1060,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "hawala-bank-sandbox"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "reqwest",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tokio",
+ "webpki-roots",
+ "zeroize",
+]
+
+[[package]]
 name = "hawala-capability-port"
 version = "0.1.0"
 dependencies = [
